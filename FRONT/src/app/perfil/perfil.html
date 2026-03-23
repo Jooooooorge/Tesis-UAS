@@ -1,0 +1,126 @@
+<div class="perfil-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Mi Perfil</h1>
+    <p>Administra tu información personal</p>
+  </div>
+
+  <div class="perfil-layout">
+    <!-- Left: Profile Card -->
+    <div class="profile-card">
+      <div class="profile-avatar-section">
+        <div class="profile-avatar">{{ getIniciales() }}</div>
+        <h2 class="profile-name">{{ nombre }}</h2>
+        <span class="profile-rol">{{ rol }}</span>
+        <span class="profile-email">{{ email }}</span>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat">
+          <span class="stat-value">{{ propuestasPublicadas }}</span>
+          <span class="stat-label">Propuestas</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ proyectosActivos }}</span>
+          <span class="stat-label">Proyectos</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ postulacionesEnviadas }}</span>
+          <span class="stat-label">Postulaciones</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Info Form -->
+    <div class="info-card">
+      <div class="info-header">
+        <h3>Información Personal</h3>
+        @if (!editMode()) {
+          <button class="btn-edit" (click)="toggleEdit()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              <path d="m15 5 4 4" />
+            </svg>
+            Editar
+          </button>
+        }
+      </div>
+
+      <div class="info-grid">
+        <!-- Nombre -->
+        <div class="info-field">
+          <label>Nombre Completo</label>
+          @if (editMode()) {
+            <input type="text" [(ngModel)]="nombre" />
+          } @else {
+            <p>{{ nombre }}</p>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="info-field">
+          <label>Correo Electrónico</label>
+          @if (editMode()) {
+            <input type="email" [(ngModel)]="email" />
+          } @else {
+            <p>{{ email }}</p>
+          }
+        </div>
+
+        <!-- Carrera -->
+        <div class="info-field">
+          <label>Carrera</label>
+          @if (editMode()) {
+            <input type="text" [(ngModel)]="carrera" />
+          } @else {
+            <p>{{ carrera }}</p>
+          }
+        </div>
+
+        <!-- Matrícula -->
+        <div class="info-field">
+          <label>Matrícula</label>
+          @if (editMode()) {
+            <input type="text" [(ngModel)]="matricula" />
+          } @else {
+            <p>{{ matricula }}</p>
+          }
+        </div>
+
+        <!-- Teléfono -->
+        <div class="info-field">
+          <label>Teléfono</label>
+          @if (editMode()) {
+            <input type="tel" [(ngModel)]="telefono" />
+          } @else {
+            <p>{{ telefono }}</p>
+          }
+        </div>
+
+        <!-- Rol -->
+        <div class="info-field">
+          <label>Rol</label>
+          <p>{{ rol }}</p>
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="info-field bio-field">
+        <label>Biografía</label>
+        @if (editMode()) {
+          <textarea [(ngModel)]="bio" rows="3"></textarea>
+        } @else {
+          <p>{{ bio }}</p>
+        }
+      </div>
+
+      @if (editMode()) {
+        <div class="form-actions">
+          <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
+          <button class="btn-save" (click)="guardarPerfil()">Guardar Cambios</button>
+        </div>
+      }
+    </div>
+  </div>
+</div>

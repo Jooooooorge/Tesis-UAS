@@ -5,7 +5,12 @@ import { RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./login/login').then((m) => m.Login),
+    loadComponent: () => import('./proyectos').then((m) => m.Proyectos),
+  },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./proyecto-detalle/proyecto-detalle').then((m) => m.ProyectoDetalle),
   },
 ];
 
@@ -13,4 +18,4 @@ const routes: Routes = [
   declarations: [],
   imports: [CommonModule, RouterModule.forChild(routes)],
 })
-export class AuthModule {}
+export class ProyectoModule {}

@@ -1,0 +1,347 @@
+<div class="propuestas-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-text">
+      <h1>Propuestas de Tesis</h1>
+      <p>Explora propuestas de proyectos o publica la tuya</p>
+    </div>
+    <button class="btn-nueva" (click)="openModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </svg>
+      Nueva Propuesta
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <div class="search-input-wrapper">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar por título, tecnología o autor..." />
+    </div>
+    <button class="btn-filtros">Filtros</button>
+  </div>
+
+  <!-- Create / Edit Modal -->
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingPropuesta() ? 'Editar Propuesta' : 'Nueva Propuesta' }}</h2>
+          <button class="modal-close" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form (ngSubmit)="crearPropuesta()" class="modal-form">
+          <div class="form-group">
+            <label for="titulo">Título de la Propuesta</label>
+            <input type="text" id="titulo" [(ngModel)]="nuevoTitulo" name="titulo"
+              placeholder="Ej: Sistema de Gestión de Inventario con ML" required />
+          </div>
+
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" [(ngModel)]="nuevoDescripcion" name="descripcion" rows="3"
+              placeholder="Describe brevemente tu propuesta de tesis..." required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="tipo">Tipo</label>
+              <select id="tipo" [(ngModel)]="nuevoTipo" name="tipo">
+                <option value="Busco Director">Busco Director</option>
+                <option value="Busco Estudiante">Busco Estudiante</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="autor">Tu Nombre</label>
+              <input type="text" id="autor" [(ngModel)]="nuevoAutor" name="autor"
+                placeholder="Nombre completo" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tecnologias">Tecnologías (separadas por coma)</label>
+            <input type="text" id="tecnologias" [(ngModel)]="nuevoTecnologias" name="tecnologias"
+              placeholder="Ej: React, Python, Machine Learning" />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancelar" (click)="closeModal()">Cancelar</button>
+            <button type="submit" class="btn-crear">
+              {{ editingPropuesta() ? 'Guardar Cambios' : 'Crear Propuesta' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteConfirm(); as p) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal delete-modal" (click)="$event.stopPropagation()">
+        <div class="delete-content">
+          <div class="delete-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              <line x1="10" x2="10" y1="11" y2="17" />
+              <line x1="14" x2="14" y1="11" y2="17" />
+            </svg>
+          </div>
+          <h3>Eliminar Propuesta</h3>
+          <p>¿Estás seguro de que deseas eliminar <strong>"{{ p.titulo }}"</strong>? Esta acción no se puede deshacer.</p>
+          <div class="delete-actions">
+            <button class="btn-cancelar" (click)="cancelDelete()">Cancelar</button>
+            <button class="btn-eliminar" (click)="eliminarPropuesta()">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Grid -->
+  <div class="propuestas-grid">
+    @for (p of propuestas(); track p.id) {
+      <div class="card">
+        <!-- Card Top Actions -->
+        <div class="card-top-row">
+          <div class="card-badge" [class.director]="p.tipo === 'Busco Director'"
+            [class.estudiante]="p.tipo === 'Busco Estudiante'">
+            @if (p.tipo === 'Busco Director') {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="badge-icon">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="badge-icon">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5" />
+              </svg>
+            }
+            <span>{{ p.tipo }}</span>
+          </div>
+
+          <!-- Owner/Admin actions -->
+          @if (puedeEditar(p) || puedeEliminar(p)) {
+            <div class="card-actions-menu">
+              @if (puedeEditar(p)) {
+                <button class="btn-card-action edit" title="Editar" (click)="openEditModal(p); $event.stopPropagation()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    <path d="m15 5 4 4" />
+                  </svg>
+                </button>
+              }
+              @if (puedeEliminar(p)) {
+                <button class="btn-card-action delete" title="Eliminar" (click)="confirmDelete(p); $event.stopPropagation()">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                  </svg>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (esCreador(p)) {
+          <span class="my-badge">Mi propuesta</span>
+        }
+
+        <!-- Content -->
+        <h3 class="card-title">{{ p.titulo }}</h3>
+        <p class="card-desc">{{ p.descripcion }}</p>
+
+        <!-- Tags -->
+        <div class="card-tags">
+          @for (tag of p.tecnologias; track tag) {
+            <span class="tag">{{ tag }}</span>
+          }
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer">
+          <div class="author">
+            <div class="avatar">{{ p.iniciales }}</div>
+            <div class="author-info">
+              <span class="author-name">{{ p.autor }}</span>
+              <span class="author-time">{{ p.tiempoPublicacion }}</span>
+            </div>
+          </div>
+          <button class="btn-detalles" (click)="verDetalles(p)">Ver Detalles</button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Detail Modal -->
+  @if (selectedPropuesta(); as p) {
+    <div class="modal-backdrop" (click)="closeDetalles()">
+      <div class="modal detail-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Detalles de la Propuesta</h2>
+          <button class="modal-close" (click)="closeDetalles()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="detail-body">
+          <!-- Badge -->
+          <div class="card-badge" [class.director]="p.tipo === 'Busco Director'"
+            [class.estudiante]="p.tipo === 'Busco Estudiante'">
+            @if (p.tipo === 'Busco Director') {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="badge-icon">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="badge-icon">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                <path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5" />
+              </svg>
+            }
+            <span>{{ p.tipo }}</span>
+          </div>
+
+          <!-- Title -->
+          <h3 class="detail-title">{{ p.titulo }}</h3>
+
+          <!-- Description -->
+          <div class="detail-section">
+            <h4>Descripción</h4>
+            <p>{{ p.descripcion }}</p>
+          </div>
+
+          <!-- Technologies -->
+          <div class="detail-section">
+            <h4>Tecnologías</h4>
+            <div class="card-tags">
+              @for (tag of p.tecnologias; track tag) {
+                <span class="tag">{{ tag }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Author -->
+          <div class="detail-section">
+            <h4>Publicado por</h4>
+            <div class="author">
+              <div class="avatar">{{ p.iniciales }}</div>
+              <div class="author-info">
+                <span class="author-name">{{ p.autor }}</span>
+                <span class="author-time">{{ p.tiempoPublicacion }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Postulation Form (only for non-creators) -->
+          @if (!esCreador(p) && showPostulacion() && !postulacionEnviada()) {
+            <div class="postulacion-form">
+              <h4>Postulación</h4>
+              <p class="postulacion-desc">Completa tus datos para postularte a esta propuesta.</p>
+              <form (ngSubmit)="enviarPostulacion()" class="modal-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="postNombre">Nombre Completo</label>
+                    <input type="text" id="postNombre" [(ngModel)]="postNombre" name="postNombre" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="postEmail">Correo Electrónico</label>
+                    <input type="email" id="postEmail" [(ngModel)]="postEmail" name="postEmail"
+                      placeholder="correo@universidad.edu" required />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="postMotivacion">¿Por qué te interesa esta propuesta?</label>
+                  <textarea id="postMotivacion" [(ngModel)]="postMotivacion" name="postMotivacion" rows="3"
+                    placeholder="Describe tu motivación e interés..." required></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="postExperiencia">Experiencia relevante (opcional)</label>
+                  <textarea id="postExperiencia" [(ngModel)]="postExperiencia" name="postExperiencia" rows="2"
+                    placeholder="Tecnologías que manejas, proyectos previos..."></textarea>
+                </div>
+                <div class="modal-actions">
+                  <button type="button" class="btn-cancelar" (click)="showPostulacion.set(false)">Cancelar</button>
+                  <button type="submit" class="btn-crear">Enviar Postulación</button>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- Postulation Success -->
+          @if (!esCreador(p) && postulacionEnviada()) {
+            <div class="postulacion-exito">
+              <div class="exito-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <path d="m9 11 3 3L22 4" />
+                </svg>
+              </div>
+              <h4>¡Postulación enviada!</h4>
+              <p>Tu postulación ha sido enviada al autor de la propuesta. Te notificaremos cuando haya una respuesta.</p>
+            </div>
+          }
+
+          <!-- Actions -->
+          <div class="detail-actions">
+            @if (esCreador(p)) {
+              <!-- Owner actions -->
+              <button class="btn-cancelar" (click)="closeDetalles()">Cerrar</button>
+              <button class="btn-edit-detail" (click)="closeDetalles(); openEditModal(p)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                  <path d="m15 5 4 4" />
+                </svg>
+                Editar
+              </button>
+              <button class="btn-eliminar" (click)="closeDetalles(); confirmDelete(p)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+                Eliminar
+              </button>
+            } @else {
+              <!-- Non-owner actions -->
+              <button class="btn-cancelar" (click)="closeDetalles()">Cerrar</button>
+              @if (!postulacionEnviada()) {
+                <button class="btn-crear" (click)="openPostulacion()">Postularse</button>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

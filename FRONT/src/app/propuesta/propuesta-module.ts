@@ -5,7 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./login/login').then((m) => m.Login),
+    loadComponent: () => import('./propuestas').then((m) => m.Propuestas),
   },
 ];
 
@@ -13,4 +13,4 @@ const routes: Routes = [
   declarations: [],
   imports: [CommonModule, RouterModule.forChild(routes)],
 })
-export class AuthModule {}
+export class PropuestaModule {}

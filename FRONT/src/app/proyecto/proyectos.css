@@ -1,0 +1,244 @@
+/* ===== Page ===== */
+.proyectos-page {
+  padding: 2rem 2.5rem;
+}
+
+/* ===== Header ===== */
+.page-header {
+  margin-bottom: 1.75rem;
+}
+
+.page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ===== List ===== */
+.proyectos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ===== Card ===== */
+.project-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  transition: box-shadow 0.2s;
+}
+
+.project-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Top Row */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.2rem;
+}
+
+.card-etapa {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.status-badge.revision {
+  background: #fef9c3;
+  color: #a16207;
+  border-color: #fde68a;
+}
+
+.status-badge.correcciones {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.status-badge.aprobado {
+  background: #dcfce7;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+.status-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Progress */
+.progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.progress-value {
+  font-weight: 600;
+  color: #111827;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #111827;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* Bottom Row */
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.people-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.person-icon {
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+}
+
+.person-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.person-avatar.codirector {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.person-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.person-role {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.person-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.date-icon {
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+}
+
+.btn-abrir {
+  padding: 0.5rem 1.15rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-abrir:hover {
+  background: #f3f4f6;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .proyectos-page {
+    padding: 1.25rem;
+  }
+
+  .card-top {
+    flex-direction: column;
+  }
+
+  .card-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .people-info {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,96 @@
+<div class="proyectos-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Mis Proyectos</h1>
+    <p>Proyectos de tesis en los que participas activamente</p>
+  </div>
+
+  <!-- Project List -->
+  <div class="proyectos-list">
+    @for (p of proyectos(); track p.id) {
+      <div class="project-card">
+        <!-- Top Row -->
+        <div class="card-top">
+          <div class="card-info">
+            <h2 class="card-title">{{ p.titulo }}</h2>
+            <p class="card-etapa">{{ p.etapa }}</p>
+          </div>
+          <div class="status-badge" [class.revision]="p.estadoTipo === 'revision'"
+            [class.correcciones]="p.estadoTipo === 'correcciones'"
+            [class.aprobado]="p.estadoTipo === 'aprobado'">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="status-icon">
+              @if (p.estadoTipo === 'aprobado') {
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <path d="m9 11 3 3L22 4" />
+              } @else {
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              }
+            </svg>
+            <span>{{ p.estado }}</span>
+          </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section">
+          <div class="progress-label">
+            <span>Progreso general</span>
+            <span class="progress-value">{{ p.progreso }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="p.progreso"></div>
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="card-bottom">
+          <div class="people-info">
+            <!-- Director -->
+            <div class="person">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="person-icon">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <div class="person-avatar">{{ p.directorIniciales }}</div>
+              <div class="person-info">
+                <span class="person-role">Director</span>
+                <span class="person-name">{{ p.director }}</span>
+              </div>
+            </div>
+
+            <!-- Codirector -->
+            <div class="person">
+              <div class="person-avatar codirector">{{ p.codirectorIniciales }}</div>
+              <div class="person-info">
+                <span class="person-role">Codirector</span>
+                <span class="person-name">{{ p.codirector }}</span>
+              </div>
+            </div>
+
+            <!-- Date -->
+            <div class="person">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="date-icon">
+                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                <path d="M16 2v4" />
+                <path d="M8 2v4" />
+                <path d="M3 10h18" />
+              </svg>
+              <div class="person-info">
+                <span class="person-role">Última actualización</span>
+                <span class="person-name">{{ p.ultimaActualizacion }}</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-abrir" (click)="abrirProyecto(p.id)">Abrir Proyecto</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
