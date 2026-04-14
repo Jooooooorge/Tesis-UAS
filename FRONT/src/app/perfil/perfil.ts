@@ -1,6 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { UsersService, UserProfile } from '../users/users.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-perfil',
@@ -9,31 +11,63 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './perfil.html',
   styleUrl: './perfil.css',
 })
-export class Perfil {
+export class Perfil implements OnInit {
+  private usersService = inject(UsersService);
+  private authService = inject(AuthService);
+
   editMode = signal(false);
+  loading = signal(true);
 
-  // Profile data
-  nombre = 'María García';
-  email = 'maria.garcia@universidad.edu';
-  rol = 'Estudiante';
-  carrera = 'Ingeniería en Sistemas Computacionales';
-  matricula = '20210001';
-  telefono = '+52 612 123 4567';
-  bio = 'Estudiante de último semestre interesada en machine learning y desarrollo web. Buscando director de tesis para proyecto de sistema de gestión de inventario con ML.';
+  nombre = '';
+  email = '';
+  rol = '';
+  carrera = '';
+  matricula = '';
+  telefono = '';
+  bio = '';
 
-  // Stats
-  propuestasPublicadas = 1;
-  proyectosActivos = 2;
-  postulacionesEnviadas = 3;
+  propuestasPublicadas = 0;
+  proyectosActivos = 0;
+  postulacionesEnviadas = 0;
 
-  // Backup for cancel
   private backup: any = {};
+
+  ngOnInit() {
+    this.usersService.getProfile().subscribe({
+      next: (user) => {
+        this.setUserData(user);
+        this.loading.set(false);
+      },
+      error: () => {
+        const cached = this.authService.getUser();
+        if (cached) {
+          this.nombre = cached.nombre;
+          this.email = cached.email;
+          this.rol = cached.rol;
+          this.carrera = cached.carrera || '';
+          this.matricula = cached.matricula || '';
+          this.telefono = cached.telefono || '';
+          this.bio = cached.bio || '';
+        }
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private setUserData(user: UserProfile) {
+    this.nombre = user.nombre;
+    this.email = user.email;
+    this.rol = user.rol;
+    this.carrera = user.carrera || '';
+    this.matricula = user.matricula || '';
+    this.telefono = user.telefono || '';
+    this.bio = user.bio || '';
+  }
 
   toggleEdit() {
     if (!this.editMode()) {
       this.backup = {
         nombre: this.nombre,
-        email: this.email,
         carrera: this.carrera,
         matricula: this.matricula,
         telefono: this.telefono,
@@ -45,7 +79,6 @@ export class Perfil {
 
   cancelEdit() {
     this.nombre = this.backup.nombre;
-    this.email = this.backup.email;
     this.carrera = this.backup.carrera;
     this.matricula = this.backup.matricula;
     this.telefono = this.backup.telefono;
@@ -54,8 +87,21 @@ export class Perfil {
   }
 
   guardarPerfil() {
-    // TODO: save to backend
-    this.editMode.set(false);
+    this.usersService
+      .updateProfile({
+        nombre: this.nombre,
+        carrera: this.carrera,
+        matricula: this.matricula,
+        telefono: this.telefono,
+        bio: this.bio,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.setUserData(updated);
+          this.editMode.set(false);
+        },
+        error: () => this.cancelEdit(),
+      });
   }
 
   getIniciales(): string {

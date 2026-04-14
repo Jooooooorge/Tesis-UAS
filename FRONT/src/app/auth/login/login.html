@@ -43,6 +43,10 @@
         </div>
       }
 
+      @if (error()) {
+        <div class="error-alert">{{ error() }}</div>
+      }
+
       <!-- Login Form -->
       @if (activeTab() === 'login') {
         <form (ngSubmit)="onSubmit()" class="login-form">
@@ -80,7 +84,9 @@
             <a class="forgot-link" (click)="switchTab('forgot'); $event.preventDefault()" href="#">¿Olvidaste tu contraseña?</a>
           </div>
 
-          <button type="submit" class="btn-login">Iniciar Sesión</button>
+          <button type="submit" class="btn-login" [disabled]="loading()">
+            {{ loading() ? 'Cargando...' : 'Iniciar Sesión' }}
+          </button>
         </form>
       }
 
@@ -150,7 +156,9 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-login">Crear Cuenta</button>
+          <button type="submit" class="btn-login" [disabled]="loading()">
+            {{ loading() ? 'Cargando...' : 'Crear Cuenta' }}
+          </button>
         </form>
       }
 

@@ -71,6 +71,22 @@
   flex-shrink: 0;
 }
 
+/* ===== Logout ===== */
+.logout-btn {
+  margin-top: auto;
+  margin-left: 0.75rem;
+  margin-right: 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.logout-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
 /* ===== Main Content ===== */
 .main-content {
   flex: 1;

@@ -265,6 +265,21 @@
   background: #1d4ed8;
 }
 
+.btn-login:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.error-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
 /* ===== Footer ===== */
 .footer-text {
   text-align: center;
