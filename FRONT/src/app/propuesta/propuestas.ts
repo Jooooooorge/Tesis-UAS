@@ -1,7 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Propuesta } from './propuesta.model';
+import { PropuestaService } from './propuesta.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-propuestas',
@@ -10,9 +12,25 @@ import { Propuesta } from './propuesta.model';
   templateUrl: './propuestas.html',
   styleUrl: './propuestas.css',
 })
-export class Propuestas {
-  // Simulated current user (TODO: replace with real auth service)
-  currentUser = signal({ id: 100, nombre: 'María García', rol: 'Estudiante' as 'Estudiante' | 'Docente' | 'Coordinador' | 'Admin' });
+export class Propuestas implements OnInit {
+  private propuestaService = inject(PropuestaService);
+  private authService = inject(AuthService);
+
+  // Real user from auth service
+  currentUser = signal(this.authService.getUser() || { id: 0, nombre: 'Invitado', rol: 'Estudiante' });
+
+  propuestas = signal<Propuesta[]>([]);
+
+  ngOnInit() {
+    this.cargarPropuestas();
+  }
+
+  cargarPropuestas() {
+    this.propuestaService.getPropuestas().subscribe({
+      next: (data) => this.propuestas.set(data),
+      error: (err) => console.error('Error al cargar propuestas', err)
+    });
+  }
 
   searchQuery = '';
   showModal = signal(false);
@@ -92,12 +110,6 @@ export class Propuestas {
   crearPropuesta() {
     if (!this.nuevoTitulo || !this.nuevoDescripcion || !this.nuevoAutor) return;
 
-    const iniciales = this.nuevoAutor
-      .split(' ')
-      .map((w) => w[0]?.toUpperCase())
-      .join('')
-      .slice(0, 3);
-
     const tags = this.nuevoTecnologias
       .split(',')
       .map((t) => t.trim())
@@ -107,30 +119,36 @@ export class Propuestas {
 
     if (editing) {
       // Update existing
-      this.propuestas.update((list) =>
-        list.map((item) =>
-          item.id === editing.id
-            ? { ...item, titulo: this.nuevoTitulo, descripcion: this.nuevoDescripcion, tipo: this.nuevoTipo, tecnologias: tags, autor: this.nuevoAutor, iniciales }
-            : item
-        )
-      );
+      this.propuestaService.updatePropuesta(editing.id, {
+        titulo: this.nuevoTitulo,
+        descripcion: this.nuevoDescripcion,
+        tipo: this.nuevoTipo,
+        tecnologias: tags,
+        autor: this.nuevoAutor
+      }).subscribe({
+        next: () => {
+          this.cargarPropuestas();
+          this.closeModal();
+        },
+        error: (err) => console.error('Error al actualizar propuesta', err)
+      });
     } else {
       // Create new
-      const nueva: Propuesta = {
-        id: Date.now(),
+      this.propuestaService.createPropuesta({
         titulo: this.nuevoTitulo,
         descripcion: this.nuevoDescripcion,
         tipo: this.nuevoTipo,
         tecnologias: tags,
         autor: this.nuevoAutor,
-        iniciales,
-        tiempoPublicacion: 'Justo ahora',
         creadorId: this.currentUser().id,
-      };
-      this.propuestas.update((list) => [nueva, ...list]);
+      }).subscribe({
+        next: () => {
+          this.cargarPropuestas();
+          this.closeModal();
+        },
+        error: (err) => console.error('Error al crear propuesta', err)
+      });
     }
-
-    this.closeModal();
   }
 
   // Delete
@@ -145,12 +163,17 @@ export class Propuestas {
   eliminarPropuesta() {
     const p = this.showDeleteConfirm();
     if (!p) return;
-    this.propuestas.update((list) => list.filter((item) => item.id !== p.id));
-    this.showDeleteConfirm.set(null);
-    // Close detail modal if it was showing this propuesta
-    if (this.selectedPropuesta()?.id === p.id) {
-      this.closeDetalles();
-    }
+    
+    this.propuestaService.deletePropuesta(p.id).subscribe({
+      next: () => {
+        this.cargarPropuestas();
+        this.showDeleteConfirm.set(null);
+        if (this.selectedPropuesta()?.id === p.id) {
+          this.closeDetalles();
+        }
+      },
+      error: (err) => console.error('Error al eliminar propuesta', err)
+    });
   }
 
   // Postulation
@@ -169,78 +192,4 @@ export class Propuestas {
     this.postulacionEnviada.set(true);
   }
 
-  propuestas = signal<Propuesta[]>([
-    {
-      id: 1,
-      titulo: 'Sistema de Gestión de Inventario con ML',
-      descripcion:
-        'Desarrollo de un sistema de inventario inteligente que utiliza machine learning para predecir demanda, optimizar stock y automatizar pedidos basándose en patrones históricos de compra.',
-      tipo: 'Busco Director',
-      tecnologias: ['React', 'Python', 'Machine Learning', 'PostgreSQL'],
-      autor: 'María García',
-      iniciales: 'MG',
-      tiempoPublicacion: 'Hace 2 días',
-      creadorId: 100,
-    },
-    {
-      id: 2,
-      titulo: 'Aplicación Móvil para Monitoreo de Salud',
-      descripcion:
-        'Busco estudiante para desarrollar app móvil de seguimiento de parámetros de salud con integración de dispositivos IoT para monitoreo en tiempo real.',
-      tipo: 'Busco Estudiante',
-      tecnologias: ['React Native', 'IoT', 'Firebase', 'Node.js'],
-      autor: 'Dr. Carlos Mendoza',
-      iniciales: 'DCM',
-      tiempoPublicacion: 'Hace 5 días',
-      creadorId: 200,
-    },
-    {
-      id: 3,
-      titulo: 'Plataforma de E-Learning con Gamificación',
-      descripcion:
-        'Plataforma educativa con elementos de gamificación para mejorar el engagement de los estudiantes en cursos universitarios.',
-      tipo: 'Busco Director',
-      tecnologias: ['Vue.js', 'Django', 'MongoDB', 'WebSockets'],
-      autor: 'Ana Martínez',
-      iniciales: 'AM',
-      tiempoPublicacion: 'Hace 1 semana',
-      creadorId: 300,
-    },
-    {
-      id: 4,
-      titulo: 'Blockchain para Trazabilidad de Cadena de Suministro',
-      descripcion:
-        'Implementación de blockchain para rastrear productos en toda la cadena de suministro con transparencia y seguridad garantizada.',
-      tipo: 'Busco Estudiante',
-      tecnologias: ['Solidity', 'Ethereum', 'Node.js', 'React'],
-      autor: 'Dr. Roberto Flores',
-      iniciales: 'DRF',
-      tiempoPublicacion: 'Hace 1 semana',
-      creadorId: 400,
-    },
-    {
-      id: 5,
-      titulo: 'Sistema de Reconocimiento Facial para Seguridad',
-      descripcion:
-        'Sistema de reconocimiento facial en tiempo real para control de acceso y seguridad en instalaciones universitarias.',
-      tipo: 'Busco Director',
-      tecnologias: ['Python', 'OpenCV', 'TensorFlow', 'Flask'],
-      autor: 'Luis Hernández',
-      iniciales: 'LH',
-      tiempoPublicacion: 'Hace 2 semanas',
-      creadorId: 500,
-    },
-    {
-      id: 6,
-      titulo: 'Chatbot Inteligente para Atención al Cliente',
-      descripcion:
-        'Desarrollo de chatbot con procesamiento de lenguaje natural para automatizar atención al cliente en instituciones educativas.',
-      tipo: 'Busco Estudiante',
-      tecnologias: ['Python', 'NLP', 'FastAPI', 'React'],
-      autor: 'Dra. Patricia López',
-      iniciales: 'DPL',
-      tiempoPublicacion: 'Hace 2 semanas',
-      creadorId: 600,
-    },
-  ]);
 }

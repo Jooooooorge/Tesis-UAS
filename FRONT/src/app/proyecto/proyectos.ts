@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Proyecto } from './proyecto.model';
+import { ProyectoService } from './proyecto.service';
 
 @Component({
   selector: 'app-proyectos',
@@ -10,52 +11,20 @@ import { Proyecto } from './proyecto.model';
   templateUrl: './proyectos.html',
   styleUrl: './proyectos.css',
 })
-export class Proyectos {
-  constructor(private router: Router) {}
+export class Proyectos implements OnInit {
+  private router = inject(Router);
+  private proyectoService = inject(ProyectoService);
+
+  proyectos = signal<Proyecto[]>([]);
+
+  ngOnInit() {
+    this.proyectoService.getProyectos().subscribe({
+      next: (data) => this.proyectos.set(data),
+      error: (err) => console.error('Error fetching proyectos:', err)
+    });
+  }
 
   abrirProyecto(id: number) {
     this.router.navigate(['/inicio/proyectos', id]);
   }
-
-  proyectos = signal<Proyecto[]>([
-    {
-      id: 1,
-      titulo: 'Sistema de Gestión de Inventario con ML',
-      etapa: 'Etapa 2: Desarrollo del Prototipo',
-      estado: 'En revisión por Codirector',
-      estadoTipo: 'revision',
-      progreso: 65,
-      director: 'Dr. Luis Hernández',
-      directorIniciales: 'DLH',
-      codirector: 'Dra. Patricia Rojas',
-      codirectorIniciales: 'DPR',
-      ultimaActualizacion: '15 Mar 2026',
-    },
-    {
-      id: 2,
-      titulo: 'Plataforma de E-Learning con Gamificación',
-      etapa: 'Etapa 1: Documentación del Prototipo',
-      estado: 'Requiere correcciones',
-      estadoTipo: 'correcciones',
-      progreso: 45,
-      director: 'Dr. Carlos Mendoza',
-      directorIniciales: 'DCM',
-      codirector: 'Dra. Ana Martínez',
-      codirectorIniciales: 'DAM',
-      ultimaActualizacion: '10 Mar 2026',
-    },
-    {
-      id: 3,
-      titulo: 'Chatbot Inteligente para Atención al Cliente',
-      etapa: 'Etapa 3: Implementación Final',
-      estado: 'Aprobado',
-      estadoTipo: 'aprobado',
-      progreso: 85,
-      director: 'Dra. Patricia López',
-      directorIniciales: 'DPL',
-      codirector: 'Dr. Roberto Flores',
-      codirectorIniciales: 'DRF',
-      ultimaActualizacion: '18 Mar 2026',
-    },
-  ]);
 }
