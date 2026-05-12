@@ -30,6 +30,14 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./perfil/perfil-module').then((m) => m.PerfilModule),
       },
+      {
+        path: 'revisiones',
+        loadComponent: () => import('./revisiones/revisiones').then((m) => m.Revisiones),
+      },
+      {
+        path: 'bandeja',
+        loadComponent: () => import('./bandeja/bandeja').then((m) => m.Bandeja),
+      },
     ],
   },
   {
