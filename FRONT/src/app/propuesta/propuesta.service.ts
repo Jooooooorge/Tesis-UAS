@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
 import { map, Observable } from 'rxjs';
 import { Propuesta } from './propuesta.model';
@@ -21,16 +21,31 @@ export class PropuestaService {
     );
   }
 
+  getPropuestasDocente(filtros?: { tipo?: string; estado_postulacion?: string }): Observable<Propuesta[]> {
+    let params = new HttpParams();
+    if (filtros?.tipo) params = params.set('tipo', filtros.tipo);
+    if (filtros?.estado_postulacion) params = params.set('estado_postulacion', filtros.estado_postulacion);
+    
+    return this.http.get<any[]>(`${API}/propuestas/docente`, { headers: this.headers(), params }).pipe(
+      map(propuestas => propuestas.map(p => this.mapToPropuesta(p)))
+    );
+  }
+
+  getPropuestasAlumno(): Observable<Propuesta[]> {
+    return this.http.get<any[]>(`${API}/propuestas/alumno`, { headers: this.headers() }).pipe(
+      map(propuestas => propuestas.map(p => this.mapToPropuesta(p)))
+    );
+  }
+
   createPropuesta(propuesta: Partial<Propuesta>): Observable<Propuesta> {
     const payload = {
       titulo: propuesta.titulo,
       descripcion: propuesta.descripcion,
       tipo: propuesta.tipo === 'Busco Director' ? 'Busco_Director' : 'Busco_Estudiante',
-      tecnologias: propuesta.tecnologias,
-      creador_id: propuesta.creadorId
+      tecnologias: propuesta.tecnologias
     };
     return this.http.post<any>(`${API}/propuestas`, payload, { headers: this.headers() }).pipe(
-      map(p => this.mapToPropuesta({ ...p, users: { nombre: propuesta.autor } })) // Mock user for the response
+      map(p => this.mapToPropuesta({ ...p, users: { nombre: this.auth.getUser()?.nombre } }))
     );
   }
 
@@ -42,7 +57,7 @@ export class PropuestaService {
       tecnologias: propuesta.tecnologias
     };
     return this.http.patch<any>(`${API}/propuestas/${id}`, payload, { headers: this.headers() }).pipe(
-      map(p => this.mapToPropuesta({ ...p, users: { nombre: propuesta.autor } }))
+      map(p => this.mapToPropuesta({ ...p, users: { nombre: propuesta.creador?.nombre } }))
     );
   }
 
@@ -56,15 +71,16 @@ export class PropuestaService {
       : 'Busco Estudiante';
 
     return {
-      id: p.id,
+      id_propuesta: p.id_propuesta || p.id,
       titulo: p.titulo,
       descripcion: p.descripcion,
       tipo: tipoNormalizado as 'Busco Director' | 'Busco Estudiante',
       tecnologias: Array.isArray(p.tecnologias) ? p.tecnologias : typeof p.tecnologias === 'string' ? JSON.parse(p.tecnologias) : [],
-      autor: p.users?.nombre || 'Usuario Desconocido',
-      iniciales: this.getIniciales(p.users?.nombre),
-      tiempoPublicacion: this.getTimeAgo(p.created_at),
-      creadorId: p.creador_id
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      creador: p.creador || p.users || { id_usuario: p.id_creador, nombre: p.users?.nombre || 'Usuario Desconocido', email: p.users?.email || '' },
+      postulaciones: p.postulaciones,
+      cantidad_postulaciones: p.cantidad_postulaciones || p.postulaciones?.length || 0
     };
   }
 

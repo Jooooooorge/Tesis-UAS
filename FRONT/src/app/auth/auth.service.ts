@@ -55,4 +55,9 @@ export class AuthService {
   isLoggedIn(): boolean {
     return !!this.getToken();
   }
+
+  getRol(): string {
+    const user = this.getUser();
+    return user?.rol || 'Estudiante';
+  }
 }

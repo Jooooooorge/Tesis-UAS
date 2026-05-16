@@ -56,19 +56,12 @@
             placeholder="Describe brevemente tu propuesta de tesis..." required></textarea>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="tipo">Tipo</label>
-            <select id="tipo" [(ngModel)]="nuevoTipo" name="tipo">
-              <option value="Busco Director">Busco Director</option>
-              <option value="Busco Estudiante">Busco Estudiante</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="autor">Tu Nombre</label>
-            <input type="text" id="autor" [(ngModel)]="nuevoAutor" name="autor" placeholder="Nombre completo"
-              required />
-          </div>
+        <div class="form-group">
+          <label for="tipo">Tipo</label>
+          <select id="tipo" [(ngModel)]="nuevoTipo" name="tipo">
+            <option value="Busco Director">Busco Director</option>
+            <option value="Busco Estudiante">Busco Estudiante</option>
+          </select>
         </div>
 
         <div class="form-group">
@@ -116,7 +109,7 @@
 
   <!-- Grid -->
   <div class="propuestas-grid">
-    @for (p of propuestas(); track p.id) {
+    @for (p of propuestas(); track p.id_propuesta) {
     <div class="card">
       <!-- Card Top Actions -->
       <div class="card-top-row">
@@ -182,10 +175,10 @@
       <!-- Footer -->
       <div class="card-footer">
         <div class="author">
-          <div class="avatar">{{ p.iniciales }}</div>
+          <div class="avatar">{{ p.creador.nombre | slice:0:1 | uppercase }}</div>
           <div class="author-info">
-            <span class="author-name">{{ p.autor }}</span>
-            <span class="author-time">{{ p.tiempoPublicacion }}</span>
+            <span class="author-name">{{ p.creador.nombre }}</span>
+            <span class="author-time">{{ p.created_at | date:'mediumDate' }}</span>
           </div>
         </div>
         <button class="btn-detalles" (click)="verDetalles(p)">Ver Detalles</button>
@@ -252,10 +245,10 @@
         <div class="detail-section">
           <h4>Publicado por</h4>
           <div class="author">
-            <div class="avatar">{{ p.iniciales }}</div>
+            <div class="avatar">{{ p.creador.nombre | slice:0:1 | uppercase }}</div>
             <div class="author-info">
-              <span class="author-name">{{ p.autor }}</span>
-              <span class="author-time">{{ p.tiempoPublicacion }}</span>
+              <span class="author-name">{{ p.creador.nombre }}</span>
+              <span class="author-time">{{ p.created_at | date:'mediumDate' }}</span>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
-import { Component, signal, computed, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Propuesta } from './propuesta.model';
+import { Propuesta, Postulacion } from './propuesta.model';
 import { PropuestaService } from './propuesta.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -16,20 +16,46 @@ export class Propuestas implements OnInit {
   private propuestaService = inject(PropuestaService);
   private authService = inject(AuthService);
 
-  // Real user from auth service
-  currentUser = signal(this.authService.getUser() || { id: 0, nombre: 'Invitado', rol: 'Estudiante' });
-
+  rol = signal(this.authService.getRol());
   propuestas = signal<Propuesta[]>([]);
+  loading = signal(true);
+  error = signal(false);
 
   ngOnInit() {
     this.cargarPropuestas();
   }
 
   cargarPropuestas() {
-    this.propuestaService.getPropuestas().subscribe({
-      next: (data) => this.propuestas.set(data),
-      error: (err) => console.error('Error al cargar propuestas', err)
-    });
+    this.loading.set(true);
+    this.error.set(false);
+
+    if (this.rol() === 'Docente') {
+      this.propuestaService.getPropuestasDocente().subscribe({
+        next: (data) => {
+          this.propuestas.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set(true);
+          this.loading.set(false);
+        }
+      });
+    } else {
+      this.propuestaService.getPropuestasAlumno().subscribe({
+        next: (data) => {
+          this.propuestas.set(data);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set(true);
+          this.loading.set(false);
+        }
+      });
+    }
+  }
+
+  get currentUser() {
+    return this.authService.getUser();
   }
 
   searchQuery = '';
@@ -39,20 +65,14 @@ export class Propuestas implements OnInit {
   showDeleteConfirm = signal<Propuesta | null>(null);
   showPostulacion = signal(false);
 
-  // Postulation form
   postNombre = '';
   postEmail = '';
   postMotivacion = '';
   postExperiencia = '';
   postulacionEnviada = signal(false);
 
-  // Permissions
   esCreador(p: Propuesta): boolean {
-    return p.creadorId === this.currentUser().id;
-  }
-
-  esAdmin(): boolean {
-    return this.currentUser().rol === 'Admin';
+    return p.creador?.id_usuario === this.currentUser?.id;
   }
 
   puedeEditar(p: Propuesta): boolean {
@@ -60,7 +80,7 @@ export class Propuestas implements OnInit {
   }
 
   puedeEliminar(p: Propuesta): boolean {
-    return this.esCreador(p) || this.esAdmin();
+    return this.esCreador(p);
   }
 
   verDetalles(p: Propuesta) {
@@ -75,12 +95,10 @@ export class Propuestas implements OnInit {
     this.postulacionEnviada.set(false);
   }
 
-  // New propuesta form
   nuevoTitulo = '';
   nuevoDescripcion = '';
   nuevoTipo: 'Busco Director' | 'Busco Estudiante' = 'Busco Director';
   nuevoTecnologias = '';
-  nuevoAutor = '';
 
   openModal() {
     this.editingPropuesta.set(null);
@@ -88,7 +106,6 @@ export class Propuestas implements OnInit {
     this.nuevoDescripcion = '';
     this.nuevoTipo = 'Busco Director';
     this.nuevoTecnologias = '';
-    this.nuevoAutor = this.currentUser().nombre;
     this.showModal.set(true);
   }
 
@@ -97,8 +114,7 @@ export class Propuestas implements OnInit {
     this.nuevoTitulo = p.titulo;
     this.nuevoDescripcion = p.descripcion;
     this.nuevoTipo = p.tipo;
-    this.nuevoTecnologias = p.tecnologias.join(', ');
-    this.nuevoAutor = p.autor;
+    this.nuevoTecnologias = p.tecnologias?.join(', ') || '';
     this.showModal.set(true);
   }
 
@@ -108,7 +124,7 @@ export class Propuestas implements OnInit {
   }
 
   crearPropuesta() {
-    if (!this.nuevoTitulo || !this.nuevoDescripcion || !this.nuevoAutor) return;
+    if (!this.nuevoTitulo || !this.nuevoDescripcion) return;
 
     const tags = this.nuevoTecnologias
       .split(',')
@@ -118,13 +134,12 @@ export class Propuestas implements OnInit {
     const editing = this.editingPropuesta();
 
     if (editing) {
-      // Update existing
-      this.propuestaService.updatePropuesta(editing.id, {
+      this.propuestaService.updatePropuesta(editing.id_propuesta, {
         titulo: this.nuevoTitulo,
         descripcion: this.nuevoDescripcion,
         tipo: this.nuevoTipo,
         tecnologias: tags,
-        autor: this.nuevoAutor
+        creador: editing.creador
       }).subscribe({
         next: () => {
           this.cargarPropuestas();
@@ -133,14 +148,11 @@ export class Propuestas implements OnInit {
         error: (err) => console.error('Error al actualizar propuesta', err)
       });
     } else {
-      // Create new
       this.propuestaService.createPropuesta({
         titulo: this.nuevoTitulo,
         descripcion: this.nuevoDescripcion,
         tipo: this.nuevoTipo,
-        tecnologias: tags,
-        autor: this.nuevoAutor,
-        creadorId: this.currentUser().id,
+        tecnologias: tags
       }).subscribe({
         next: () => {
           this.cargarPropuestas();
@@ -151,7 +163,6 @@ export class Propuestas implements OnInit {
     }
   }
 
-  // Delete
   confirmDelete(p: Propuesta) {
     this.showDeleteConfirm.set(p);
   }
@@ -164,11 +175,11 @@ export class Propuestas implements OnInit {
     const p = this.showDeleteConfirm();
     if (!p) return;
     
-    this.propuestaService.deletePropuesta(p.id).subscribe({
+    this.propuestaService.deletePropuesta(p.id_propuesta).subscribe({
       next: () => {
         this.cargarPropuestas();
         this.showDeleteConfirm.set(null);
-        if (this.selectedPropuesta()?.id === p.id) {
+        if (this.selectedPropuesta()?.id_propuesta === p.id_propuesta) {
           this.closeDetalles();
         }
       },
@@ -176,10 +187,8 @@ export class Propuestas implements OnInit {
     });
   }
 
-  // Postulation
   openPostulacion() {
-    this.postNombre = this.currentUser().nombre;
-    this.postEmail = '';
+    this.postNombre = this.currentUser?.nombre || '';
     this.postMotivacion = '';
     this.postExperiencia = '';
     this.postulacionEnviada.set(false);
@@ -187,9 +196,7 @@ export class Propuestas implements OnInit {
   }
 
   enviarPostulacion() {
-    if (!this.postNombre || !this.postEmail || !this.postMotivacion) return;
-    // TODO: send to backend
+    if (!this.postMotivacion) return;
     this.postulacionEnviada.set(true);
   }
-
 }
