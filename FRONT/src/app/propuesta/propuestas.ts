@@ -1,7 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Propuesta, Postulacion } from './propuesta.model';
+import { Propuesta } from './propuesta.model';
 import { PropuestaService } from './propuesta.service';
 import { AuthService } from '../auth/auth.service';
 
@@ -19,44 +19,7 @@ export class Propuestas implements OnInit {
   rol = signal(this.authService.getRol());
   propuestas = signal<Propuesta[]>([]);
   loading = signal(true);
-  error = signal(false);
-
-  ngOnInit() {
-    this.cargarPropuestas();
-  }
-
-  cargarPropuestas() {
-    this.loading.set(true);
-    this.error.set(false);
-
-    if (this.rol() === 'Docente') {
-      this.propuestaService.getPropuestasDocente().subscribe({
-        next: (data) => {
-          this.propuestas.set(data);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.error.set(true);
-          this.loading.set(false);
-        }
-      });
-    } else {
-      this.propuestaService.getPropuestasAlumno().subscribe({
-        next: (data) => {
-          this.propuestas.set(data);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.error.set(true);
-          this.loading.set(false);
-        }
-      });
-    }
-  }
-
-  get currentUser() {
-    return this.authService.getUser();
-  }
+  errorMsg = signal('');
 
   searchQuery = '';
   showModal = signal(false);
@@ -70,6 +33,36 @@ export class Propuestas implements OnInit {
   postMotivacion = '';
   postExperiencia = '';
   postulacionEnviada = signal(false);
+
+  nuevoTitulo = '';
+  nuevoDescripcion = '';
+  nuevoTipo: 'Busco Director' | 'Busco Estudiante' = 'Busco Director';
+  nuevoTecnologias = '';
+
+  ngOnInit() {
+    this.cargarPropuestas();
+  }
+
+  cargarPropuestas() {
+    this.loading.set(true);
+    this.errorMsg.set('');
+
+    if (this.rol() === 'Docente') {
+      this.propuestaService.getPropuestasDocente().subscribe({
+        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
+        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
+      });
+    } else {
+      this.propuestaService.getPropuestasAlumno().subscribe({
+        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
+        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
+      });
+    }
+  }
+
+  get currentUser() {
+    return this.authService.getUser();
+  }
 
   esCreador(p: Propuesta): boolean {
     return p.creador?.id_usuario === this.currentUser?.id;
@@ -94,11 +87,6 @@ export class Propuestas implements OnInit {
     this.showPostulacion.set(false);
     this.postulacionEnviada.set(false);
   }
-
-  nuevoTitulo = '';
-  nuevoDescripcion = '';
-  nuevoTipo: 'Busco Director' | 'Busco Estudiante' = 'Busco Director';
-  nuevoTecnologias = '';
 
   openModal() {
     this.editingPropuesta.set(null);
@@ -126,11 +114,7 @@ export class Propuestas implements OnInit {
   crearPropuesta() {
     if (!this.nuevoTitulo || !this.nuevoDescripcion) return;
 
-    const tags = this.nuevoTecnologias
-      .split(',')
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
+    const tags = this.nuevoTecnologias.split(',').map((t) => t.trim()).filter((t) => t.length > 0);
     const editing = this.editingPropuesta();
 
     if (editing) {
@@ -141,11 +125,8 @@ export class Propuestas implements OnInit {
         tecnologias: tags,
         creador: editing.creador
       }).subscribe({
-        next: () => {
-          this.cargarPropuestas();
-          this.closeModal();
-        },
-        error: (err) => console.error('Error al actualizar propuesta', err)
+        next: () => { this.cargarPropuestas(); this.closeModal(); },
+        error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al actualizar la propuesta.')
       });
     } else {
       this.propuestaService.createPropuesta({
@@ -154,11 +135,8 @@ export class Propuestas implements OnInit {
         tipo: this.nuevoTipo,
         tecnologias: tags
       }).subscribe({
-        next: () => {
-          this.cargarPropuestas();
-          this.closeModal();
-        },
-        error: (err) => console.error('Error al crear propuesta', err)
+        next: () => { this.cargarPropuestas(); this.closeModal(); },
+        error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al crear la propuesta.')
       });
     }
   }
@@ -174,21 +152,19 @@ export class Propuestas implements OnInit {
   eliminarPropuesta() {
     const p = this.showDeleteConfirm();
     if (!p) return;
-    
     this.propuestaService.deletePropuesta(p.id_propuesta).subscribe({
       next: () => {
         this.cargarPropuestas();
         this.showDeleteConfirm.set(null);
-        if (this.selectedPropuesta()?.id_propuesta === p.id_propuesta) {
-          this.closeDetalles();
-        }
+        if (this.selectedPropuesta()?.id_propuesta === p.id_propuesta) this.closeDetalles();
       },
-      error: (err) => console.error('Error al eliminar propuesta', err)
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al eliminar la propuesta.')
     });
   }
 
   openPostulacion() {
     this.postNombre = this.currentUser?.nombre || '';
+    this.postEmail = '';
     this.postMotivacion = '';
     this.postExperiencia = '';
     this.postulacionEnviada.set(false);
