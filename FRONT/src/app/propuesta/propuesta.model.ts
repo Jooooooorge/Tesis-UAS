@@ -38,6 +38,60 @@ export interface Postulacion {
   users?: { id_usuario: number; nombre: string; email: string; rol: string };
 }
 
+/** Forma raw que devuelve el backend antes de mapear — usada por PropuestasService */
+export interface PropuestaBackend {
+  id_propuesta: number;
+  titulo: string;
+  descripcion: string;
+  tipo: 'Busco_Director' | 'Busco_Estudiante';
+  tecnologias: string[] | null;
+  created_at: string;
+  updated_at?: string;
+  creador?: { id_usuario: number; nombre: string; email: string };
+  users?: { id_usuario: number; nombre: string; email: string };
+  postulaciones?: Postulacion[];
+  cantidad_postulaciones?: number;
+}
+export interface User {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  rol: 'Estudiante' | 'Docente';
+  carrera?: string;
+  matricula?: string;
+  telefono?: string;
+  bio?: string;
+}
+
+export interface Propuesta {
+  id_propuesta: number;
+  titulo: string;
+  descripcion: string;
+  tipo: 'Busco Director' | 'Busco Estudiante';
+  tecnologias?: string[];
+  created_at: string;
+  updated_at?: string;
+  creador: { id_usuario: number; nombre: string; email: string };
+  postulaciones?: Postulacion[];
+  cantidad_postulaciones?: number;
+}
+
+export interface Postulacion {
+  id_postulacion: number;
+  id_propuesta: number;
+  id_usuario: number;
+  mensaje?: string;
+  estado: 'pendiente' | 'aceptada' | 'rechazada';
+  created_at: string;
+  updated_at?: string;
+  propuesta?: {
+    titulo: string;
+    tipo: string;
+    creador: { id_usuario: number; nombre: string; email: string };
+  };
+  users?: { id_usuario: number; nombre: string; email: string; rol: string };
+}
+
 /** Forma raw del backend — usada por PropuestasService */
 export interface PropuestaBackend {
   id_propuesta: number;
@@ -51,4 +105,4 @@ export interface PropuestaBackend {
   users?: { id_usuario: number; nombre: string; email: string };
   postulaciones?: Postulacion[];
   cantidad_postulaciones?: number;
-}
+}
