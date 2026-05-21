@@ -22,6 +22,11 @@ export class MainLayout implements OnInit {
     return rol === 'Docente' || rol === 'Profesor' || rol === 'Coordinador';
   }
 
+  get esEstudiante(): boolean {
+    return this.currentUser()?.rol === 'Estudiante';
+  }
+
+
   logout() {
     this.authService.logout();
   }
