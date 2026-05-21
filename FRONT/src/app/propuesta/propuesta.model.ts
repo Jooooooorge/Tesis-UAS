@@ -37,3 +37,18 @@ export interface Postulacion {
   };
   users?: { id_usuario: number; nombre: string; email: string; rol: string };
 }
+
+/** Forma raw del backend — usada por PropuestasService */
+export interface PropuestaBackend {
+  id_propuesta: number;
+  titulo: string;
+  descripcion: string;
+  tipo: 'Busco_Director' | 'Busco_Estudiante';
+  tecnologias: string[] | null;
+  created_at: string;
+  updated_at?: string;
+  creador?: { id_usuario: number; nombre: string; email: string };
+  users?: { id_usuario: number; nombre: string; email: string };
+  postulaciones?: Postulacion[];
+  cantidad_postulaciones?: number;
+}
