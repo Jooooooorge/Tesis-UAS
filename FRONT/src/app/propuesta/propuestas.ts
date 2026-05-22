@@ -64,8 +64,14 @@ export class Propuestas implements OnInit {
     return this.authService.getUser();
   }
 
-  esCreador(p: Propuesta): boolean {
-    return p.creador?.id_usuario === this.currentUser?.id;
+  esCreador(p: any): boolean {
+    if (!this.currentUser) return false;
+    
+    // Check various possible ID field names depending on backend mapping
+    const currentUserId = this.currentUser.id || this.currentUser.id_usuario;
+    const creadorId = p.creador?.id || p.creador?.id_usuario || p.creador_id || p.users?.id;
+    
+    return currentUserId !== undefined && creadorId === currentUserId;
   }
 
   puedeEditar(p: Propuesta): boolean {
