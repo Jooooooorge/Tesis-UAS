@@ -38,6 +38,10 @@ export const routes: Routes = [
         path: 'bandeja',
         loadComponent: () => import('./bandeja/bandeja').then((m) => m.Bandeja),
       },
+      {
+        path: 'notificaciones',
+        loadComponent: () => import('./notificaciones/notificaciones').then((m) => m.NotificacionesComponent),
+      },
     ],
   },
   {

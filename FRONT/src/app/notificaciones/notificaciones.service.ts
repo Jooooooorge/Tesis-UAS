@@ -29,8 +29,12 @@ export class NotificacionesService {
   getNotificaciones(leida?: boolean): Observable<Notificacion[]> {
     let params = new HttpParams();
     if (leida !== undefined) params = params.set('leida', leida.toString());
-    
+
     return this.http.get<Notificacion[]>(`${API}/notificaciones`, { headers: this.headers(), params });
+  }
+
+  countNoLeidas(): Observable<number> {
+    return this.http.get<number>(`${API}/notificaciones/no-leidas/count`, { headers: this.headers() });
   }
 
   marcarLeida(id: number): Observable<Notificacion> {

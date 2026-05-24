@@ -1,0 +1,58 @@
+<div class="notificaciones-container">
+  <div class="notificaciones-header">
+    <h2>Notificaciones</h2>
+    <div class="header-actions">
+      <label class="filtro-checkbox">
+        <input type="checkbox" [checked]="mostrarSoloNoLeidas()" (change)="mostrarSoloNoLeidas.set(!mostrarSoloNoLeidas())">
+        <span>No leídas ({{ totalNoLeidas }})</span>
+      </label>
+      <button *ngIf="totalNoLeidas > 0" (click)="marcarTodasLeidas()" class="btn-marcar-todas">
+        Marcar todas como leídas
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMsg()" class="error-message">
+    {{ errorMsg() }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando notificaciones...</p>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading() && notificacionesFiltradas.length === 0" class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    <h3>No hay notificaciones</h3>
+    <p>Aún no tienes notificaciones. Se mostrarán aquí las actualizaciones del sistema.</p>
+  </div>
+
+  <div *ngIf="!loading() && notificacionesFiltradas.length > 0" class="notificaciones-list">
+    <div
+      *ngFor="let notif of notificacionesFiltradas"
+      [ngClass]="['notificacion-item', getColorByType(notif.tipo), { 'no-leida': !notif.leida }]"
+      (click)="marcarLeida(notif)"
+    >
+      <div class="notificacion-icon">
+        {{ getIconByType(notif.tipo) }}
+      </div>
+      <div class="notificacion-content">
+        <div class="notificacion-titulo">
+          {{ notif.titulo }}
+        </div>
+        <div class="notificacion-mensaje">
+          {{ notif.mensaje }}
+        </div>
+        <div class="notificacion-metadata">
+          <span class="notificacion-tipo">{{ notif.tipo }}</span>
+          <span class="notificacion-tiempo">{{ getTiempoTranscurrido(notif.created_at) }}</span>
+        </div>
+      </div>
+      <div class="notificacion-estado">
+        <div *ngIf="!notif.leida" class="badge-no-leida">Nuevo</div>
+      </div>
+    </div>
+  </div>
+</div>
