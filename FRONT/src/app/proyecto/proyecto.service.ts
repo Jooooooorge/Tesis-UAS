@@ -27,19 +27,38 @@ export class ProyectoService {
     );
   }
 
+  uploadFile(idProyecto: number, tipo: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('id_proyecto', idProyecto.toString());
+    formData.append('tipo', tipo);
+    // Don't set Content-Type header manually, browser sets it with boundary for FormData
+    const headers = new HttpHeaders({ Authorization: `Bearer ${this.auth.getToken()}` });
+    return this.http.post<any>(`${API}/revisiones/upload`, formData, { headers });
+  }
+
+  evaluarRevision(idRevision: number, estado: string, comentario: string): Observable<any> {
+    return this.http.patch<any>(
+      `${API}/revisiones/${idRevision}/estado`,
+      { estado, comentario },
+      { headers: this.headers() }
+    );
+  }
+
   private mapToProyecto(p: any): Proyecto {
     return {
-      id: p.id,
+      id: p.id_proyecto || p.id,
       titulo: p.titulo,
       etapa: p.etapa,
       estado: p.estado,
       estadoTipo: p.estado_tipo || 'revision',
       progreso: p.progreso || 0,
-      director: p.users_proyectos_director_idTousers?.nombre || 'Sin asignar',
-      directorIniciales: this.getIniciales(p.users_proyectos_director_idTousers?.nombre),
-      codirector: p.users_proyectos_codirector_idTousers?.nombre || 'Sin asignar',
-      codirectorIniciales: this.getIniciales(p.users_proyectos_codirector_idTousers?.nombre),
-      ultimaActualizacion: p.ultima_actualizacion ? new Date(p.ultima_actualizacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'
+      director: p.director?.nombre || 'Sin asignar',
+      directorIniciales: this.getIniciales(p.director?.nombre),
+      codirector: p.codirector?.nombre || 'Sin asignar',
+      codirectorIniciales: this.getIniciales(p.codirector?.nombre),
+      ultimaActualizacion: p.ultima_actualizacion ? new Date(p.ultima_actualizacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A',
+      revisiones: p.revisiones || []
     };
   }
 

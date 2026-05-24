@@ -333,6 +333,33 @@
         </div>
         }
 
+        <!-- Postulations List (Only for Creator) -->
+        @if (esCreador(p) && p.postulaciones && p.postulaciones.length > 0) {
+        <div class="detail-section">
+          <h4>Postulantes</h4>
+          <div class="postulantes-list">
+            @for (postulacion of p.postulaciones; track postulacion.id_postulacion) {
+              <div class="postulante-card">
+                <div class="postulante-info">
+                  <div class="postulante-header">
+                    <span class="postulante-name">{{ postulacion.users?.nombre || 'Usuario Desconocido' }}</span>
+                    <span class="postulante-estado" [ngClass]="postulacion.estado">{{ postulacion.estado }}</span>
+                  </div>
+                  <span class="postulante-email">{{ postulacion.users?.email }}</span>
+                  <p class="postulante-mensaje">"{{ postulacion.mensaje }}"</p>
+                </div>
+                @if (postulacion.estado === 'pendiente') {
+                <div class="postulante-actions">
+                  <button class="btn-crear btn-sm" (click)="aceptarPostulacion(postulacion.id_postulacion)">Aceptar</button>
+                  <button class="btn-cancelar btn-sm" (click)="rechazarPostulacion(postulacion.id_postulacion)">Rechazar</button>
+                </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+        }
+
         <!-- Actions -->
         <div class="detail-actions">
           @if (esCreador(p)) {

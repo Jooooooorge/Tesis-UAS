@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Propuesta } from './propuesta.model';
 import { PropuestaService } from './propuesta.service';
 import { AuthService } from '../auth/auth.service';
+import { PostulacionService } from '../postulacion/postulacion.service';
 
 @Component({
   selector: 'app-propuestas',
@@ -15,6 +16,7 @@ import { AuthService } from '../auth/auth.service';
 export class Propuestas implements OnInit {
   private propuestaService = inject(PropuestaService);
   private authService = inject(AuthService);
+  private postulacionService = inject(PostulacionService);
 
   rol = signal(this.authService.getRol());
   propuestas = signal<Propuesta[]>([]);
@@ -217,6 +219,38 @@ export class Propuestas implements OnInit {
 
   enviarPostulacion() {
     if (!this.postMotivacion) return;
-    this.postulacionEnviada.set(true);
+    const p = this.selectedPropuesta();
+    if (!p) return;
+
+    this.postulacionService.createPostulacion({
+      id_propuesta: p.id_propuesta,
+      mensaje: this.postMotivacion + (this.postExperiencia ? `\nExperiencia: ${this.postExperiencia}` : '')
+    }).subscribe({
+      next: () => {
+        this.postulacionEnviada.set(true);
+        this.cargarPropuestas();
+      },
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al enviar postulación.')
+    });
+  }
+
+  aceptarPostulacion(id_postulacion: number) {
+    this.postulacionService.cambiarEstado(id_postulacion, 'aceptada').subscribe({
+      next: () => {
+        this.closeDetalles();
+        this.cargarPropuestas();
+      },
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al aceptar postulación.')
+    });
+  }
+
+  rechazarPostulacion(id_postulacion: number) {
+    this.postulacionService.cambiarEstado(id_postulacion, 'rechazada').subscribe({
+      next: () => {
+        this.closeDetalles();
+        this.cargarPropuestas();
+      },
+      error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al rechazar postulación.')
+    });
   }
 }

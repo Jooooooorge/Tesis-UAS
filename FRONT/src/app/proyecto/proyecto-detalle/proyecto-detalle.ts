@@ -1,6 +1,10 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ProyectoService } from '../proyecto.service';
+import { AuthService } from '../../auth/auth.service';
+import { Proyecto } from '../proyecto.model';
 
 interface SubEtapa {
   nombre: string;
@@ -13,77 +17,74 @@ interface Etapa {
   subetapas: SubEtapa[];
 }
 
-interface ArchivoSubido {
-  nombre: string;
-  fecha: string;
-  tamano: string;
-}
-
-interface Revision {
-  autor: string;
-  iniciales: string;
-  rol: string;
-  estado: 'aprobado' | 'correcciones';
-  comentario: string;
-  fecha: string;
-}
-
 @Component({
   selector: 'app-proyecto-detalle',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './proyecto-detalle.html',
   styleUrl: './proyecto-detalle.css',
 })
-export class ProyectoDetalle {
-  constructor(private router: Router) {}
+export class ProyectoDetalle implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private proyectoService = inject(ProyectoService);
+  private authService = inject(AuthService);
 
-  proyectoTitulo = 'Sistema de Gestión de Inventario con ML';
+  proyecto = signal<Proyecto | null>(null);
+  proyectoTitulo = 'Cargando proyecto...';
+  isDocente = signal<boolean>(false);
+  isLoading = signal<boolean>(true);
 
-  etapas = signal<Etapa[]>([
+  // File upload state
+  selectedFile = signal<File | null>(null);
+  
+  // Grading state
+  evaluacionEstado = signal<'aceptada' | 'requiere_cambios'>('aceptada');
+  evaluacionComentario = signal<string>('');
+
+  etapasBase = [
     {
       nombre: 'Etapa 1: Documentación del Prototipo',
       icono: 'doc',
-      subetapas: [
-        { nombre: 'Descripción', estado: 'completado' },
-        { nombre: 'Diagramas de C.U.', estado: 'completado' },
-        { nombre: 'Arquitectura', estado: 'en-revision' },
-        { nombre: 'Entidad-Relación', estado: 'pendiente' },
-        { nombre: 'Interfaces', estado: 'pendiente' },
-      ],
+      subetapas: ['Descripción', 'Diagramas de C.U.', 'Arquitectura', 'Entidad-Relación', 'Interfaces'],
     },
     {
       nombre: 'Etapa 2: Desarrollo del Prototipo',
       icono: 'code',
-      subetapas: [
-        { nombre: 'Avance 25%', estado: 'pendiente' },
-        { nombre: 'Avance 50%', estado: 'pendiente' },
-        { nombre: 'Avance 75%', estado: 'pendiente' },
-        { nombre: 'Avance 100%', estado: 'pendiente' },
-      ],
+      subetapas: ['Avance 25%', 'Avance 50%', 'Avance 75%', 'Avance 100%'],
     },
     {
       nombre: 'Etapa 3: Capítulo 1 Introducción',
       icono: 'book',
-      subetapas: [
-        { nombre: 'Objetivos', estado: 'pendiente' },
-        { nombre: 'Antecedentes', estado: 'pendiente' },
-        { nombre: 'Planteamiento del problema', estado: 'pendiente' },
-        { nombre: 'Preguntas de investigación', estado: 'pendiente' },
-        { nombre: 'Justificación', estado: 'pendiente' },
-        { nombre: 'Viabilidad', estado: 'pendiente' },
-        { nombre: 'Metodología', estado: 'pendiente' },
-      ],
+      subetapas: ['Objetivos', 'Antecedentes', 'Planteamiento del problema', 'Preguntas de investigación', 'Justificación', 'Viabilidad', 'Metodología'],
     },
     {
       nombre: 'Etapa 4: Capítulo 2 Marco Teórico',
       icono: 'book',
-      subetapas: [
-        { nombre: 'Revisión de literatura', estado: 'pendiente' },
-        { nombre: 'Desarrollo de conceptos', estado: 'pendiente' },
-      ],
+      subetapas: ['Revisión de literatura', 'Desarrollo de conceptos'],
     },
-  ]);
+  ];
+
+  etapas = computed<Etapa[]>(() => {
+    const p = this.proyecto();
+    if (!p) return [];
+
+    return this.etapasBase.map(etapa => ({
+      nombre: etapa.nombre,
+      icono: etapa.icono,
+      subetapas: etapa.subetapas.map(nombre => {
+        // Find latest revision for this subetapa
+        const revision = p.revisiones?.find((r: any) => r.tipo === nombre);
+        let estado: 'completado' | 'en-revision' | 'pendiente' = 'pendiente';
+        if (revision) {
+          if (revision.estado === 'aceptada') estado = 'completado';
+          else if (revision.estado === 'pendiente') estado = 'en-revision';
+          // requiere_cambios = pendiente essentially
+        }
+        return { nombre, estado };
+      })
+    }));
+  });
 
   expandedEtapa = signal<number>(0);
   selectedEtapa = signal<number>(0);
@@ -95,37 +96,66 @@ export class ProyectoDetalle {
     return etapa?.subetapas[this.selectedSubEtapa()];
   });
 
-  archivoActual = signal<ArchivoSubido | null>({
-    nombre: 'arquitectura_sistema_v3.pdf',
-    fecha: '13 Mar 2026',
-    tamano: '2.4 MB',
+  revisionesActuales = computed(() => {
+    const p = this.proyecto();
+    const sub = this.subEtapaActual();
+    if (!p || !sub || !p.revisiones) return [];
+    return p.revisiones.filter((r: any) => r.tipo === sub.nombre);
   });
 
-  versionesAnteriores = signal<ArchivoSubido[]>([
-    { nombre: 'arquitectura_sistema_v2.pdf', fecha: '8 Mar 2026', tamano: '2.1 MB' },
-    { nombre: 'arquitectura_sistema_v1.pdf', fecha: '1 Mar 2026', tamano: '1.8 MB' },
-  ]);
+  archivoActual = computed(() => {
+    const revs = this.revisionesActuales();
+    if (revs.length === 0) return null;
+    const latest = revs[0] as any;
+    return {
+      id: latest.id_revision,
+      nombre: latest.documento_path.split('/').pop(),
+      fecha: new Date(latest.fecha).toLocaleDateString(),
+      url: `http://localhost:3000${latest.documento_path}`,
+      estado: latest.estado,
+      tamano: 'Desconocido'
+    };
+  });
 
-  revisiones = signal<Revision[]>([
-    {
-      autor: 'Dr. Luis Hernández',
-      iniciales: 'DLH',
-      rol: 'Director',
-      estado: 'aprobado',
-      comentario:
-        'Excelente trabajo en los diagramas de caso de uso. La documentación está clara y completa. Aprobado para continuar con la siguiente sección.',
-      fecha: '15 Mar 2026 • 14:30',
-    },
-    {
-      autor: 'Dra. Patricia Rojas',
-      iniciales: 'DPR',
-      rol: 'Codirector',
-      estado: 'correcciones',
-      comentario:
-        'El diagrama de arquitectura necesita más detalle en la capa de servicios. Por favor, incluye información sobre los endpoints de la API REST.',
-      fecha: '14 Mar 2026 • 10:15',
-    },
-  ]);
+  versionesAnteriores = computed(() => {
+    const revs = this.revisionesActuales();
+    if (revs.length <= 1) return [];
+    return revs.slice(1).map((r: any) => ({
+      nombre: r.documento_path.split('/').pop(),
+      fecha: new Date(r.fecha).toLocaleDateString(),
+      tamano: 'Desconocido',
+      url: `http://localhost:3000${r.documento_path}`
+    }));
+  });
+
+  ngOnInit() {
+    const user = this.authService.getUser();
+    this.isDocente.set(user ? user.rol === 'Docente' : false);
+
+    this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (id) {
+        this.loadProyecto(id);
+      }
+    });
+  }
+
+  loadProyecto(id: number) {
+    this.isLoading.set(true);
+    this.proyectoService.getProyectoById(id).subscribe({
+      next: (data) => {
+        // Sort revisiones by date descending just in case
+        if (data.revisiones) {
+          data.revisiones.sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+        }
+        this.proyecto.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
+  }
 
   toggleEtapa(index: number) {
     this.expandedEtapa.set(this.expandedEtapa() === index ? -1 : index);
@@ -135,9 +165,51 @@ export class ProyectoDetalle {
     this.selectedEtapa.set(etapaIdx);
     this.selectedSubEtapa.set(subIdx);
     this.expandedEtapa.set(etapaIdx);
+    this.selectedFile.set(null);
+    this.evaluacionComentario.set('');
   }
 
   volverAProyectos() {
     this.router.navigate(['/inicio/proyectos']);
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile.set(file);
+    }
+  }
+
+  subirArchivo() {
+    const file = this.selectedFile();
+    const p = this.proyecto();
+    const sub = this.subEtapaActual();
+    if (!file || !p || !sub) return;
+
+    this.proyectoService.uploadFile(p.id, sub.nombre, file).subscribe({
+      next: () => {
+        this.selectedFile.set(null);
+        this.loadProyecto(p.id);
+      },
+      error: (err) => console.error('Error subiendo archivo', err)
+    });
+  }
+
+  enviarEvaluacion() {
+    const revs = this.revisionesActuales();
+    const p = this.proyecto();
+    if (revs.length === 0 || !p) return;
+    
+    const latest = revs[0] as any;
+    
+    // Send evaluation to backend
+    this.proyectoService.evaluarRevision(latest.id_revision, this.evaluacionEstado(), this.evaluacionComentario()).subscribe({
+      next: () => {
+        // Also we would normally send the message via the Mensajes or Notificaciones system
+        // But the backend automatically creates a notification! 
+        this.loadProyecto(p.id);
+      },
+      error: (err) => console.error('Error evaluando', err)
+    });
   }
 }
