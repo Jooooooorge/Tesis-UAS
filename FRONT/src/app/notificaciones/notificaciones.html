@@ -32,7 +32,9 @@
   <div *ngIf="!loading() && notificacionesFiltradas.length > 0" class="notificaciones-list">
     <div
       *ngFor="let notif of notificacionesFiltradas"
-      [ngClass]="['notificacion-item', getColorByType(notif.tipo), { 'no-leida': !notif.leida }]"
+      class="notificacion-item"
+      [class.no-leida]="!notif.leida"
+      [ngClass]="getColorByType(notif.tipo)"
       (click)="marcarLeida(notif)"
     >
       <div class="notificacion-icon">

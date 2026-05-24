@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Propuesta } from './propuesta.model';
@@ -23,7 +23,31 @@ export class Propuestas implements OnInit {
   loading = signal(true);
   errorMsg = signal('');
 
-  searchQuery = '';
+  searchQuery = signal('');
+  selectedFilter = signal<'todos' | 'Busco Director' | 'Busco Estudiante'>('todos');
+  showFilterDropdown = signal(false);
+
+  propuestasFiltradas = computed(() => {
+    let lista = this.propuestas();
+    const query = this.searchQuery().toLowerCase().trim();
+    const filtro = this.selectedFilter();
+
+    if (filtro !== 'todos') {
+      const normalizedFiltro = filtro.replace(' ', '_');
+      lista = lista.filter(p => p.tipo === filtro || p.tipo === normalizedFiltro);
+    }
+
+    if (query) {
+      lista = lista.filter(p =>
+        p.titulo.toLowerCase().includes(query) ||
+        p.descripcion.toLowerCase().includes(query) ||
+        p.creador?.nombre?.toLowerCase().includes(query) ||
+        (p.tecnologias ?? []).some(t => t.toLowerCase().includes(query))
+      );
+    }
+
+    return lista;
+  });
   showModal = signal(false);
   selectedPropuesta = signal<Propuesta | null>(null);
   editingPropuesta = signal<Propuesta | null>(null);
@@ -138,7 +162,7 @@ export class Propuestas implements OnInit {
     this.editingPropuesta.set(null);
     this.nuevoTitulo = '';
     this.nuevoDescripcion = '';
-    this.nuevoTipo = 'Busco Director';
+    this.nuevoTipo = this.rol() === 'Docente' ? 'Busco Estudiante' : 'Busco Director';
     this.nuevoTecnologias = '';
     this.showModal.set(true);
   }
@@ -218,13 +242,16 @@ export class Propuestas implements OnInit {
   }
 
   enviarPostulacion() {
-    if (!this.postMotivacion) return;
     const p = this.selectedPropuesta();
     if (!p) return;
 
+    const partes: string[] = [];
+    if (this.postMotivacion.trim()) partes.push(this.postMotivacion.trim());
+    if (this.postExperiencia.trim()) partes.push(`Experiencia: ${this.postExperiencia.trim()}`);
+
     this.postulacionService.createPostulacion({
       id_propuesta: p.id_propuesta,
-      mensaje: this.postMotivacion + (this.postExperiencia ? `\nExperiencia: ${this.postExperiencia}` : '')
+      mensaje: partes.join('\n') || 'Interesado en esta propuesta'
     }).subscribe({
       next: () => {
         this.postulacionEnviada.set(true);
@@ -234,9 +261,55 @@ export class Propuestas implements OnInit {
     });
   }
 
+  getPostulacionesActivas(p: Propuesta): any[] {
+    return p.postulaciones?.filter(post => post.estado !== 'rechazada') || [];
+  }
+
+  getPostulacionUsuario(p: Propuesta): any | null {
+    const user = this.currentUser;
+    if (!user || !p.postulaciones) return null;
+
+    const extractId = (val: any): number | undefined => {
+      if (val == null) return undefined;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const n = Number(val);
+        return Number.isNaN(n) ? undefined : n;
+      }
+      if (typeof val === 'object') {
+        return extractId(val.id_usuario ?? val.id ?? val.user_id ?? val.usuario_id ?? val.idUser);
+      }
+      return undefined;
+    };
+
+    const currentUserId = extractId(user);
+    if (currentUserId === undefined) return null;
+
+    const userPosts = p.postulaciones.filter(post => extractId(post.id_usuario ?? post.users?.id_usuario) === currentUserId);
+    if (userPosts.length === 0) return null;
+
+    // Prefer accepted postulation if it exists
+    const accepted = userPosts.find(post => post.estado === 'aceptada');
+    if (accepted) return accepted;
+
+    // Otherwise, return the most recent postulation
+    return userPosts.reduce((latest, current) => {
+      const currentId = Number(current.id_postulacion) || 0;
+      const latestId = Number(latest.id_postulacion) || 0;
+      return currentId > latestId ? current : latest;
+    }, userPosts[0]);
+  }
+
   aceptarPostulacion(id_postulacion: number) {
     this.postulacionService.cambiarEstado(id_postulacion, 'aceptada').subscribe({
       next: () => {
+        const current = this.selectedPropuesta();
+        if (current && current.postulaciones) {
+          current.postulaciones = current.postulaciones.map(post =>
+            post.id_postulacion === id_postulacion ? { ...post, estado: 'aceptada' } : post
+          );
+          this.selectedPropuesta.set({ ...current });
+        }
         this.closeDetalles();
         this.cargarPropuestas();
       },
@@ -247,7 +320,11 @@ export class Propuestas implements OnInit {
   rechazarPostulacion(id_postulacion: number) {
     this.postulacionService.cambiarEstado(id_postulacion, 'rechazada').subscribe({
       next: () => {
-        this.closeDetalles();
+        const current = this.selectedPropuesta();
+        if (current && current.postulaciones) {
+          current.postulaciones = current.postulaciones.filter(post => post.id_postulacion !== id_postulacion);
+          this.selectedPropuesta.set({ ...current });
+        }
         this.cargarPropuestas();
       },
       error: (err) => this.errorMsg.set(err.error?.message ?? 'Error al rechazar postulación.')

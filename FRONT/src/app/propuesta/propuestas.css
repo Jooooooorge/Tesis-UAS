@@ -113,6 +113,126 @@
   background: #f3f4f6;
 }
 
+.btn-filtros.active {
+  border-color: #2563eb;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.btn-filtros .filter-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-filtros {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.filter-active-dot {
+  width: 6px;
+  height: 6px;
+  background: #2563eb;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Filter Wrapper */
+.filter-wrapper {
+  position: relative;
+}
+
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  min-width: 180px;
+  padding: 0.35rem;
+  animation: fadeInDropdown 0.15s ease-out;
+}
+
+@keyframes fadeInDropdown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filter-option {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  border-radius: 6px;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+
+.filter-option:hover {
+  background: #f3f4f6;
+}
+
+.filter-option.selected {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* Search clear button */
+.search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  color: #9ca3af;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.search-clear:hover {
+  color: #374151;
+}
+
+.search-clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Limpiar filtros button */
+.btn-limpiar {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.15rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #2563eb;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-limpiar:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
 /* ===== Grid ===== */
 .propuestas-grid {
   display: grid;
@@ -786,3 +906,29 @@
 .postulante-estado.rechazada { background-color: rgba(239, 68, 68, 0.1); color: #dc2626; }
 .postulante-actions { display: flex; gap: 8px; justify-content: flex-end; }
 .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+
+/* Status message for already postuled users */
+.user-postulacion-status {
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-postulacion-status.pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.user-postulacion-status.aceptada {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.user-postulacion-status.rechazada {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
