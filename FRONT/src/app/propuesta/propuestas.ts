@@ -47,17 +47,41 @@ export class Propuestas implements OnInit {
     this.loading.set(true);
     this.errorMsg.set('');
 
-    if (this.rol() === 'Docente') {
-      this.propuestaService.getPropuestasDocente().subscribe({
-        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
-        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
-      });
-    } else {
-      this.propuestaService.getPropuestasAlumno().subscribe({
-        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
-        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
-      });
-    }
+    const currentUser = this.currentUser;
+    const extractId = (val: any): number | undefined => {
+      if (val == null) return undefined;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const n = Number(val);
+        return Number.isNaN(n) ? undefined : n;
+      }
+      if (typeof val === 'object') {
+        return extractId(val.id_usuario ?? val.id ?? val.user_id ?? val.usuario_id ?? val.idUser ?? val.id_propuesta);
+      }
+      return undefined;
+    };
+    const currentUserId = extractId(currentUser);
+
+    this.propuestaService.getPropuestas().subscribe({
+      next: (data) => {
+        const propuestasFiltradas = data.filter(p => {
+          const isOwnPropuesta = currentUserId !== undefined && p.id_creador === currentUserId;
+
+          if (this.rol() === 'Docente') {
+            return p.tipo === 'Busco Director' || isOwnPropuesta;
+          } else {
+            return p.tipo === 'Busco Estudiante' || isOwnPropuesta;
+          }
+        });
+
+        this.propuestas.set(propuestasFiltradas);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.');
+        this.loading.set(false);
+      }
+    });
   }
 
   get currentUser() {
