@@ -1,58 +1,58 @@
-<div class="bandeja-container">
-  <div class="page-header">
-    <h1 class="page-title">Notificaciones</h1>
-    <p class="page-subtitle">Mantente al tanto de la actividad en tus propuestas y proyectos</p>
-  </div>
-  <div class="inbox-layout">
-    <!-- Sidebar -->
-    <div class="inbox-sidebar">
-      <div class="sidebar-menu">
-        <button class="menu-item active">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-          Todas
-          <span class="badge">{{ unreadCount() }}</span>
-        </button>
-        @if (unreadCount() > 0) {
-          <button class="menu-item" (click)="marcarTodasLeidas()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            Marcar todas leídas
-          </button>
-        }
-      </div>
+<div class="notificaciones-container">
+  <div class="notificaciones-header">
+    <h2>Notificaciones</h2>
+    <div class="header-actions">
+      <label class="filtro-checkbox">
+        <input type="checkbox" [checked]="mostrarSoloNoLeidas()" (change)="mostrarSoloNoLeidas.set(!mostrarSoloNoLeidas())">
+        <span>No leídas ({{ totalNoLeidas }})</span>
+      </label>
+      <button *ngIf="totalNoLeidas > 0" (click)="marcarTodasLeidas()" class="btn-marcar-todas">
+        Marcar todas como leídas
+      </button>
     </div>
+  </div>
 
-    <!-- Notification List -->
-    <div class="message-list-container">
-      @if (loading()) {
-        <div class="loading-state">
-          <div class="spinner"></div>
-          <p>Cargando notificaciones...</p>
+  <div *ngIf="errorMsg()" class="error-message">
+    {{ errorMsg() }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando notificaciones...</p>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="!loading() && notificacionesFiltradas.length === 0" class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+    <h3>No hay notificaciones</h3>
+    <p>Aún no tienes notificaciones. Se mostrarán aquí las actualizaciones del sistema.</p>
+  </div>
+
+  <div *ngIf="!loading() && notificacionesFiltradas.length > 0" class="notificaciones-list">
+    <div
+      *ngFor="let notif of notificacionesFiltradas"
+      [ngClass]="['notificacion-item', getColorByType(notif.tipo), { 'no-leida': !notif.leida }]"
+      (click)="marcarLeida(notif)"
+    >
+      <div class="notificacion-icon">
+        {{ getIconByType(notif.tipo) }}
+      </div>
+      <div class="notificacion-content">
+        <div class="notificacion-titulo">
+          {{ notif.titulo }}
         </div>
-      } @else {
-        @if (notificaciones().length === 0) {
-          <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="1" x2="23" y1="1" y2="23"/></svg>
-            <h3>Sin notificaciones</h3>
-            <p>No tienes notificaciones en este momento.</p>
-          </div>
-        } @else {
-          <div class="message-list">
-            @for (notif of notificaciones(); track notif.id_notificacion) {
-              <div class="message-item" [class.unread]="!notif.leida" (click)="marcarLeida(notif.id_notificacion)">
-                <div class="sender-avatar">{{ getTipoIcon(notif.tipo) }}</div>
-                <div class="message-content">
-                  <div class="message-header">
-                    <span class="sender-name">{{ getTipoLabel(notif.tipo) }}</span>
-                    <span class="message-date">{{ notif.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
-                  </div>
-                  <div class="message-subject">{{ notif.titulo }}</div>
-                  <div class="message-preview">{{ notif.mensaje }}</div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      }
+        <div class="notificacion-mensaje">
+          {{ notif.mensaje }}
+        </div>
+        <div class="notificacion-metadata">
+          <span class="notificacion-tipo">{{ notif.tipo }}</span>
+          <span class="notificacion-tiempo">{{ getTiempoTranscurrido(notif.created_at) }}</span>
+        </div>
+      </div>
+      <div class="notificacion-estado">
+        <div *ngIf="!notif.leida" class="badge-no-leida">Nuevo</div>
+      </div>
     </div>
   </div>
 </div>

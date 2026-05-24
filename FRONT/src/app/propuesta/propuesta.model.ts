@@ -18,6 +18,7 @@ export interface Propuesta {
   created_at: string;
   updated_at?: string;
   creador: { id_usuario: number; nombre: string; email: string };
+  id_creador: number;
   postulaciones?: Postulacion[];
   cantidad_postulaciones?: number;
 }

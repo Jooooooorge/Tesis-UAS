@@ -47,22 +47,34 @@ export class Propuestas implements OnInit {
     this.loading.set(true);
     this.errorMsg.set('');
 
+    const currentUser = this.currentUser;
+    const extractId = (val: any): number | undefined => {
+      if (val == null) return undefined;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const n = Number(val);
+        return Number.isNaN(n) ? undefined : n;
+      }
+      if (typeof val === 'object') {
+        return extractId(val.id_usuario ?? val.id ?? val.user_id ?? val.usuario_id ?? val.idUser ?? val.id_propuesta);
+      }
+      return undefined;
+    };
+    const currentUserId = extractId(currentUser);
+
     this.propuestaService.getPropuestas().subscribe({
       next: (data) => {
-        const user = this.currentUser;
-        const userId = user?.id;
-        const rol = this.rol();
+        const propuestasFiltradas = data.filter(p => {
+          const isOwnPropuesta = currentUserId !== undefined && p.id_creador === currentUserId;
 
-        // 1. Propuestas creadas por el usuario actual
-        const propias = data.filter(p => this.esCreador(p));
+          if (this.rol() === 'Docente') {
+            return p.tipo === 'Busco Director' || isOwnPropuesta;
+          } else {
+            return p.tipo === 'Busco Estudiante' || isOwnPropuesta;
+          }
+        });
 
-        // 2. Propuestas de otros usuarios según el rol:
-        //    - Estudiante ve las de tipo "Busco Estudiante"
-        //    - Docente ve las de tipo "Busco Director"
-        const tipoFiltro = rol === 'Estudiante' ? 'Busco Estudiante' : 'Busco Director';
-        const deOtros = data.filter(p => !this.esCreador(p) && p.tipo === tipoFiltro);
-
-        this.propuestas.set([...propias, ...deOtros]);
+        this.propuestas.set(propuestasFiltradas);
         this.loading.set(false);
       },
       error: (err) => {

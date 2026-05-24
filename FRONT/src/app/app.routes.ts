@@ -40,7 +40,7 @@ export const routes: Routes = [
       },
       {
         path: 'notificaciones',
-        loadComponent: () => import('./notificaciones/notificaciones').then((m) => m.Notificaciones),
+        loadComponent: () => import('./notificaciones/notificaciones').then((m) => m.NotificacionesComponent),
       },
     ],
   },
