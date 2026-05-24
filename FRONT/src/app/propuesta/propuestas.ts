@@ -47,17 +47,29 @@ export class Propuestas implements OnInit {
     this.loading.set(true);
     this.errorMsg.set('');
 
-    if (this.rol() === 'Docente') {
-      this.propuestaService.getPropuestasDocente().subscribe({
-        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
-        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
-      });
-    } else {
-      this.propuestaService.getPropuestasAlumno().subscribe({
-        next: (data) => { this.propuestas.set(data); this.loading.set(false); },
-        error: (err) => { this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.'); this.loading.set(false); }
-      });
-    }
+    this.propuestaService.getPropuestas().subscribe({
+      next: (data) => {
+        const user = this.currentUser;
+        const userId = user?.id;
+        const rol = this.rol();
+
+        // 1. Propuestas creadas por el usuario actual
+        const propias = data.filter(p => this.esCreador(p));
+
+        // 2. Propuestas de otros usuarios según el rol:
+        //    - Estudiante ve las de tipo "Busco Estudiante"
+        //    - Docente ve las de tipo "Busco Director"
+        const tipoFiltro = rol === 'Estudiante' ? 'Busco Estudiante' : 'Busco Director';
+        const deOtros = data.filter(p => !this.esCreador(p) && p.tipo === tipoFiltro);
+
+        this.propuestas.set([...propias, ...deOtros]);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        this.errorMsg.set(err.error?.message ?? 'Error al cargar las propuestas.');
+        this.loading.set(false);
+      }
+    });
   }
 
   get currentUser() {
