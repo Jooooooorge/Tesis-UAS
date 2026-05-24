@@ -23,9 +23,33 @@
         <circle cx="11" cy="11" r="8" />
         <path d="m21 21-4.3-4.3" />
       </svg>
-      <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar por título, tecnología o autor..." />
+      <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar por título, tecnología o autor..." />
+      @if (searchQuery()) {
+        <button class="search-clear" (click)="searchQuery.set('')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+          </svg>
+        </button>
+      }
     </div>
-    <button class="btn-filtros">Filtros</button>
+    <div class="filter-wrapper">
+      <button class="btn-filtros" [class.active]="selectedFilter() !== 'todos'" (click)="showFilterDropdown.set(!showFilterDropdown())">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="filter-icon">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+        </svg>
+        Filtros
+        @if (selectedFilter() !== 'todos') {
+          <span class="filter-active-dot"></span>
+        }
+      </button>
+      @if (showFilterDropdown()) {
+        <div class="filter-dropdown">
+          <button class="filter-option" [class.selected]="selectedFilter() === 'todos'" (click)="selectedFilter.set('todos'); showFilterDropdown.set(false)">Todos</button>
+          <button class="filter-option" [class.selected]="selectedFilter() === 'Busco Director'" (click)="selectedFilter.set('Busco Director'); showFilterDropdown.set(false)">Busco Director</button>
+          <button class="filter-option" [class.selected]="selectedFilter() === 'Busco Estudiante'" (click)="selectedFilter.set('Busco Estudiante'); showFilterDropdown.set(false)">Busco Estudiante</button>
+        </div>
+      }
+    </div>
   </div>
 
   <!-- Loading -->
@@ -79,7 +103,7 @@
 
         <div class="form-group">
           <label for="tipo">Tipo</label>
-          <select id="tipo" [(ngModel)]="nuevoTipo" name="tipo">
+          <select id="tipo" [(ngModel)]="nuevoTipo" name="tipo" disabled>
             <option value="Busco Director">Busco Director</option>
             <option value="Busco Estudiante">Busco Estudiante</option>
           </select>
@@ -135,9 +159,16 @@
       <h3>No hay propuestas</h3>
       <p>Aún no hay propuestas disponibles. Crea una nueva para comenzar.</p>
     </div>
+  } @else if (!loading() && !errorMsg() && propuestasFiltradas().length === 0) {
+    <div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <h3>Sin resultados</h3>
+      <p>No se encontraron propuestas que coincidan con tu búsqueda.</p>
+      <button class="btn-limpiar" (click)="searchQuery.set(''); selectedFilter.set('todos')">Limpiar filtros</button>
+    </div>
   } @else {
     <div class="propuestas-grid">
-      @for (p of propuestas(); track p.id_propuesta) {
+      @for (p of propuestasFiltradas(); track p.id_propuesta) {
       <div class="card">
         <!-- CARDS DE LAS PROPUESTAS->
         <!-- Card Top Actions -->
@@ -287,23 +318,12 @@
         @if (!esCreador(p) && showPostulacion() && !postulacionEnviada()) {
         <div class="postulacion-form">
           <h4>Postulación</h4>
-          <p class="postulacion-desc">Completa tus datos para postularte a esta propuesta.</p>
+          <p class="postulacion-desc">Envía tu postulación a esta propuesta. Puedes agregar un mensaje opcional.</p>
           <form (ngSubmit)="enviarPostulacion()" class="modal-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="postNombre">Nombre Completo</label>
-                <input type="text" id="postNombre" [(ngModel)]="postNombre" name="postNombre" required />
-              </div>
-              <div class="form-group">
-                <label for="postEmail">Correo Electrónico</label>
-                <input type="email" id="postEmail" [(ngModel)]="postEmail" name="postEmail"
-                  placeholder="correo@universidad.edu" required />
-              </div>
-            </div>
             <div class="form-group">
-              <label for="postMotivacion">¿Por qué te interesa esta propuesta?</label>
+              <label for="postMotivacion">Mensaje (opcional)</label>
               <textarea id="postMotivacion" [(ngModel)]="postMotivacion" name="postMotivacion" rows="3"
-                placeholder="Describe tu motivación e interés..." required></textarea>
+                placeholder="¿Por qué te interesa esta propuesta?"></textarea>
             </div>
             <div class="form-group">
               <label for="postExperiencia">Experiencia relevante (opcional)</label>
@@ -334,11 +354,11 @@
         }
 
         <!-- Postulations List (Only for Creator) -->
-        @if (esCreador(p) && p.postulaciones && p.postulaciones.length > 0) {
+        @if (esCreador(p) && getPostulacionesActivas(p).length > 0) {
         <div class="detail-section">
           <h4>Postulantes</h4>
           <div class="postulantes-list">
-            @for (postulacion of p.postulaciones; track postulacion.id_postulacion) {
+            @for (postulacion of getPostulacionesActivas(p); track postulacion.id_postulacion) {
               <div class="postulante-card">
                 <div class="postulante-info">
                   <div class="postulante-header">
@@ -385,8 +405,12 @@
           } @else {
           <!-- Non-owner actions -->
           <button class="btn-cancelar" (click)="closeDetalles()">Cerrar</button>
-          @if (!postulacionEnviada()) {
-          <button class="btn-crear" (click)="openPostulacion()">Postularse</button>
+          @if (getPostulacionUsuario(p); as post) {
+            <div class="user-postulacion-status" [ngClass]="post.estado">
+              <span>Ya te postulaste a esta propuesta (Estado: <strong>{{ post.estado | uppercase }}</strong>)</span>
+            </div>
+          } @else if (!postulacionEnviada()) {
+            <button class="btn-crear" (click)="openPostulacion()">Postularse</button>
           }
           }
         </div>

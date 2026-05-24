@@ -16,7 +16,9 @@ export class ProyectoService {
   }
 
   getProyectos(): Observable<Proyecto[]> {
-    return this.http.get<any[]>(`${API}/proyectos`, { headers: this.headers() }).pipe(
+    const rol = this.auth.getRol();
+    const endpoint = rol === 'Docente' ? 'docente' : 'alumno';
+    return this.http.get<any[]>(`${API}/proyectos/${endpoint}`, { headers: this.headers() }).pipe(
       map(proyectosBackend => proyectosBackend.map(p => this.mapToProyecto(p)))
     );
   }
