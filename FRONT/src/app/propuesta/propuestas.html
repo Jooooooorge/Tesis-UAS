@@ -129,12 +129,19 @@
   }
 
   <!-- Grid -->
-  <div class="propuestas-grid">
-    @for (p of propuestas(); track p.id_propuesta) {
-    <div class="card">
-      <!-- CARDS DE LAS PROPUESTAS->
-      <!-- Card Top Actions -->
-      <div class="card-top-row">
+  @if (!loading() && !errorMsg() && propuestas().length === 0) {
+    <div class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      <h3>No hay propuestas</h3>
+      <p>Aún no hay propuestas disponibles. Crea una nueva para comenzar.</p>
+    </div>
+  } @else {
+    <div class="propuestas-grid">
+      @for (p of propuestas(); track p.id_propuesta) {
+      <div class="card">
+        <!-- CARDS DE LAS PROPUESTAS->
+        <!-- Card Top Actions -->
+        <div class="card-top-row">
         <div class="card-badge" [class.director]="p.tipo === 'Busco Director'"
           [class.estudiante]="p.tipo === 'Busco Estudiante'">
           @if (p.tipo === 'Busco Director') {
@@ -208,6 +215,7 @@
     </div>
     }
   </div>
+  }
 
   <!-- Detail Modal -->
   @if (selectedPropuesta(); as p) {

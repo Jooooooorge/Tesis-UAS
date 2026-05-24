@@ -20,30 +20,7 @@ export class Revisiones implements OnInit {
   }
 
   private cargarRevisiones() {
-    this.loading.set(true);
-    // setTimeout(() => {
-    //   this.revisiones.set([
-    //     {
-    //       id: 1,
-    //       proyectoTitulo: 'Sistema de Gestión de Inventario con ML',
-    //       estudiante: 'María García',
-    //       tipo: 'Revisión de Protocolo',
-    //       fechaRecepcion: '10 May 2026',
-    //       diasPendiente: 2,
-    //       documentoAdjunto: 'Protocolo_v2.pdf'
-    //     },
-    //     {
-    //       id: 2,
-    //       proyectoTitulo: 'App Móvil para Monitoreo de Salud',
-    //       estudiante: 'Juan Pérez',
-    //       tipo: 'Revisión de Capítulo 1',
-    //       fechaRecepcion: '05 May 2026',
-    //       diasPendiente: 7,
-    //       documentoAdjunto: 'Capitulo1_Corregido.docx'
-    //     }
-    //   ]);
-    //   this.loading.set(false);
-    // });
+    this.loading.set(false);
   }
 
   verDetalle(id: number) {

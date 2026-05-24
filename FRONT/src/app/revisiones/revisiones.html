@@ -14,7 +14,14 @@
     </div>
   } @else {
       <div class="revisiones-grid">
-        @for (rev of revisiones(); track rev.id) {
+        @if (revisiones().length === 0) {
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <h3>Todo al día</h3>
+            <p>No tienes revisiones pendientes en este momento.</p>
+          </div>
+        } @else {
+           @for (rev of revisiones(); track rev.id) {
           <div class="revision-card">
             <div class="card-header">
               <span class="badge" [class.urgent]="rev.diasPendiente > 3">{{ rev.tipo }}</span>
@@ -37,13 +44,9 @@
               <button class="btn btn-primary" (click)="aprobar(rev.id)">Aprobar</button>
             </div>
           </div>
-        } @empty {
-          <div class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            <h3>Todo al día</h3>
-            <p>No tienes revisiones pendientes en este momento.</p>
-          </div>
         }
+        }
+
       </div>
     }
 </div>

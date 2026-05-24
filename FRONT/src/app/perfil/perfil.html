@@ -11,7 +11,14 @@
       <p>Cargando perfil...</p>
     </div>
   } @else {
-    <div class="perfil-layout">
+    @if (!nombre && !email && !rol) {
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>Perfil vacío</h3>
+        <p>No se encontró información de perfil para este usuario.</p>
+      </div>
+    } @else {
+      <div class="perfil-layout">
       <!-- Left: Profile Card -->
       <div class="profile-card">
         <div class="profile-avatar-section">
@@ -129,5 +136,6 @@
         }
       </div>
     </div>
+    }
   }
 </div>

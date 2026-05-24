@@ -27,28 +27,36 @@
 
     <!-- Message List -->
     <div class="message-list-container">
-    @if (loading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Cargando bandeja...</p>
-      </div>
-    } @else {
-      <div class="message-list">
-        @for (msg of mensajes(); track msg.id) {
-          <div class="message-item" [class.unread]="!msg.leido" (click)="marcarLeido(msg.id)">
-            <div class="sender-avatar">{{ msg.iniciales }}</div>
-            <div class="message-content">
-              <div class="message-header">
-                <span class="sender-name">{{ msg.remitente }}</span>
-                <span class="message-date">{{ msg.fecha }}</span>
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Cargando bandeja...</p>
+        </div>
+      } @else {
+        @if (mensajes().length === 0) {
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <h3>Bandeja vacía</h3>
+            <p>No tienes mensajes en este momento.</p>
+          </div>
+        } @else {
+          <div class="message-list">
+            @for (msg of mensajes(); track msg.id) {
+              <div class="message-item" [class.unread]="!msg.leido" (click)="marcarLeido(msg.id)">
+                <div class="sender-avatar">{{ msg.iniciales }}</div>
+                <div class="message-content">
+                  <div class="message-header">
+                    <span class="sender-name">{{ msg.remitente }}</span>
+                    <span class="message-date">{{ msg.fecha }}</span>
+                  </div>
+                  <div class="message-subject">{{ msg.asunto }}</div>
+                  <div class="message-preview">{{ msg.vistaPrevia }}</div>
+                </div>
               </div>
-              <div class="message-subject">{{ msg.asunto }}</div>
-              <div class="message-preview">{{ msg.vistaPrevia }}</div>
-            </div>
+            }
           </div>
         }
-      </div>
-    }
+      }
     </div>
   </div>
 </div>

@@ -11,11 +11,18 @@
       <p>Cargando proyectos...</p>
     </div>
   } @else {
+    @if (proyectos().length === 0) {
+      <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>Sin proyectos</h3>
+        <p>Aún no tienes proyectos activos.</p>
+      </div>
+    } @else {
 
-  <!-- Project List -->
-  <div class="proyectos-list">
-    @for (p of proyectos(); track p.id) {
-      <div class="project-card">
+    <!-- Project List -->
+    <div class="proyectos-list">
+      @for (p of proyectos(); track p.id) {
+        <div class="project-card">
         <!-- Top Row -->
         <div class="card-top">
           <div class="card-info">
@@ -98,7 +105,8 @@
           <button class="btn-abrir" (click)="abrirProyecto(p.id)">Abrir Proyecto</button>
         </div>
       </div>
+      }
+    </div>
     }
-  </div>
   }
 </div>
