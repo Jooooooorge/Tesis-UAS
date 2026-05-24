@@ -25,7 +25,7 @@ export class PropuestaService {
     let params = new HttpParams();
     if (filtros?.tipo) params = params.set('tipo', filtros.tipo);
     if (filtros?.estado_postulacion) params = params.set('estado_postulacion', filtros.estado_postulacion);
-    
+
     return this.http.get<any[]>(`${API}/propuestas/docente`, { headers: this.headers(), params }).pipe(
       map(propuestas => propuestas.map(p => this.mapToPropuesta(p)))
     );
@@ -66,8 +66,8 @@ export class PropuestaService {
   }
 
   private mapToPropuesta(p: any): Propuesta {
-    const tipoNormalizado = p.tipo === 'Busco_Director' || p.tipo === 'Busco Director' 
-      ? 'Busco Director' 
+    const tipoNormalizado = p.tipo === 'Busco_Director' || p.tipo === 'Busco Director'
+      ? 'Busco Director'
       : 'Busco Estudiante';
 
     return {
@@ -79,6 +79,7 @@ export class PropuestaService {
       created_at: p.created_at,
       updated_at: p.updated_at,
       creador: p.creador || p.users || { id_usuario: p.id_creador, nombre: p.users?.nombre || 'Usuario Desconocido', email: p.users?.email || '' },
+      id_creador: p.id_creador,
       postulaciones: p.postulaciones,
       cantidad_postulaciones: p.cantidad_postulaciones || p.postulaciones?.length || 0
     };
@@ -97,7 +98,7 @@ export class PropuestaService {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Hoy';
     if (diffDays === 1) return 'Hace 1 día';
     if (diffDays < 7) return `Hace ${diffDays} días`;
