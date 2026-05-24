@@ -132,6 +132,7 @@
   <div class="propuestas-grid">
     @for (p of propuestas(); track p.id_propuesta) {
     <div class="card">
+      <!-- CARDS DE LAS PROPUESTAS->
       <!-- Card Top Actions -->
       <div class="card-top-row">
         <div class="card-badge" [class.director]="p.tipo === 'Busco Director'"

@@ -65,13 +65,27 @@ export class Propuestas implements OnInit {
   }
 
   esCreador(p: any): boolean {
-    if (!this.currentUser) return false;
-    
-    // Check various possible ID field names depending on backend mapping
-    const currentUserId = this.currentUser.id || this.currentUser.id_usuario;
-    const creadorId = p.creador?.id || p.creador?.id_usuario || p.creador_id || p.users?.id;
-    
-    return currentUserId !== undefined && creadorId === currentUserId;
+
+    const user = this.currentUser;
+    if (!user) return false;
+
+    const extractId = (val: any): number | undefined => {
+      if (val == null) return undefined;
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const n = Number(val);
+        return Number.isNaN(n) ? undefined : n;
+      }
+      if (typeof val === 'object') {
+        return extractId(val.id_usuario ?? val.id ?? val.user_id ?? val.usuario_id ?? val.idUser ?? val.id_propuesta);
+      }
+      return undefined;
+    };
+
+    const currentUserId = extractId(user);
+    const creadorId = extractId(p?.creador) ?? extractId(p?.creador_id) ?? extractId(p?.users) ?? extractId(p?.user) ?? extractId(p?.creador_usuario);
+
+    return currentUserId !== undefined && creadorId !== undefined && currentUserId === creadorId;
   }
 
   puedeEditar(p: Propuesta): boolean {
