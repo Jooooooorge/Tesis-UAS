@@ -10,4 +10,5 @@ export interface Proyecto {
   codirector: string;
   codirectorIniciales: string;
   ultimaActualizacion: string;
+  revisiones?: any[];
 }
