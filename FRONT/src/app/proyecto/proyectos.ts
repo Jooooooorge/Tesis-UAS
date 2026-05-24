@@ -15,12 +15,19 @@ export class Proyectos implements OnInit {
   private router = inject(Router);
   private proyectoService = inject(ProyectoService);
 
+  loading = signal(true);
   proyectos = signal<Proyecto[]>([]);
 
   ngOnInit() {
     this.proyectoService.getProyectos().subscribe({
-      next: (data) => this.proyectos.set(data),
-      error: (err) => console.error('Error fetching proyectos:', err)
+      next: (data) => {
+        this.proyectos.set(data);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching proyectos:', err);
+        this.loading.set(false);
+      }
     });
   }
 

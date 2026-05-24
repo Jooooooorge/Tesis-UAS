@@ -5,6 +5,13 @@
     <p>Proyectos de tesis en los que participas activamente</p>
   </div>
 
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando proyectos...</p>
+    </div>
+  } @else {
+
   <!-- Project List -->
   <div class="proyectos-list">
     @for (p of proyectos(); track p.id) {
@@ -93,4 +100,5 @@
       </div>
     }
   </div>
+  }
 </div>
