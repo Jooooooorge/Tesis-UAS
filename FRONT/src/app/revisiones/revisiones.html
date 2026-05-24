@@ -1,0 +1,52 @@
+
+
+<div class="revisiones-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Revisiones Pendientes</h1>
+      <p class="page-subtitle">Proyectos que requieren tu atención como director o codirector</p>
+    </div>
+  </div>
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Cargando revisiones...</p>
+    </div>
+  } @else {
+      <div class="revisiones-grid">
+        @if (revisiones().length === 0) {
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <h3>Todo al día</h3>
+            <p>No tienes revisiones pendientes en este momento.</p>
+          </div>
+        } @else {
+           @for (rev of revisiones(); track rev.id) {
+          <div class="revision-card">
+            <div class="card-header">
+              <span class="badge" [class.urgent]="rev.diasPendiente > 3">{{ rev.tipo }}</span>
+              <span class="date">Recibido: {{ rev.fechaRecepcion }}</span>
+            </div>
+
+            <h3 class="proyecto-titulo">{{ rev.proyectoTitulo }}</h3>
+            <p class="estudiante-nombre">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-small"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              {{ rev.estudiante }}
+            </p>
+
+            <div class="document-info">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-small"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>{{ rev.documentoAdjunto }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn btn-outline" (click)="verDetalle(rev.id)">Ver Detalles</button>
+              <button class="btn btn-primary" (click)="aprobar(rev.id)">Aprobar</button>
+            </div>
+          </div>
+        }
+        }
+
+      </div>
+    }
+</div>
