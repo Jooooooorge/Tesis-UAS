@@ -181,15 +181,17 @@
         @if (!isDocente()) {
           <!-- Action Buttons -->
           <div class="action-buttons">
-            <button class="btn-enviar" [disabled]="!selectedFile()" (click)="subirArchivo()">Enviar para Revisión</button>
+            <button class="btn-enviar" [class.loading]="isUploading()" [disabled]="!selectedFile() || isUploading()" (click)="subirArchivo()">
+              @if (isUploading()) { Subiendo archivo... } @else { Enviar para Revisión }
+            </button>
           </div>
         } @else {
           <!-- Grading Form -->
           <div class="grading-section" style="margin-top: 2rem; background-color: #f9fafb; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb;">
             <h4 style="margin-bottom: 1.25rem; color: #111827; font-size: 1.1rem;">Evaluación de la Entrega</h4>
-            
+
             <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-              <button class="btn-eval btn-aprobar" [class.active]="evaluacionEstado() === 'aceptada'" 
+              <button class="btn-eval btn-aprobar" [class.active]="evaluacionEstado() === 'aceptada'"
                       (click)="evaluacionEstado.set('aceptada')">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" /></svg>
                 Aprobar Entrega
@@ -200,18 +202,18 @@
                 Rechazar / Correcciones
               </button>
             </div>
-            
+
             <div style="margin-bottom: 1.5rem;">
               <label style="display: block; font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem; font-weight: 500;">Observaciones / Comentarios (opcional)</label>
-              <textarea 
-                [ngModel]="evaluacionComentario()" 
+              <textarea
+                [ngModel]="evaluacionComentario()"
                 (ngModelChange)="evaluacionComentario.set($event)"
                 placeholder="Escribe el feedback o correcciones para el alumno aquí..."
                 rows="4"
                 style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #111827; font-family: inherit; resize: vertical; box-sizing: border-box;"
               ></textarea>
             </div>
-            
+
             <button class="btn-enviar" style="width: 100%" (click)="enviarEvaluacion()">
               Guardar Evaluación
             </button>

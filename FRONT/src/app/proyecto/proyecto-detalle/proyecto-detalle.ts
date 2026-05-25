@@ -37,7 +37,8 @@ export class ProyectoDetalle implements OnInit {
 
   // File upload state
   selectedFile = signal<File | null>(null);
-  
+  isUploading = signal<boolean>(false);
+
   // Grading state
   evaluacionEstado = signal<'aceptada' | 'requiere_cambios'>('aceptada');
   evaluacionComentario = signal<string>('');
@@ -186,12 +187,17 @@ export class ProyectoDetalle implements OnInit {
     const sub = this.subEtapaActual();
     if (!file || !p || !sub) return;
 
+    this.isUploading.set(true);
     this.proyectoService.uploadFile(p.id, sub.nombre, file).subscribe({
       next: () => {
         this.selectedFile.set(null);
         this.loadProyecto(p.id);
+        this.isUploading.set(false);
       },
-      error: (err) => console.error('Error subiendo archivo', err)
+      error: (err) => {
+        console.error('Error subiendo archivo', err);
+        this.isUploading.set(false);
+      }
     });
   }
 
@@ -199,14 +205,14 @@ export class ProyectoDetalle implements OnInit {
     const revs = this.revisionesActuales();
     const p = this.proyecto();
     if (revs.length === 0 || !p) return;
-    
+
     const latest = revs[0] as any;
-    
+
     // Send evaluation to backend
     this.proyectoService.evaluarRevision(latest.id_revision, this.evaluacionEstado(), this.evaluacionComentario()).subscribe({
       next: () => {
         // Also we would normally send the message via the Mensajes or Notificaciones system
-        // But the backend automatically creates a notification! 
+        // But the backend automatically creates a notification!
         this.loadProyecto(p.id);
       },
       error: (err) => console.error('Error evaluando', err)

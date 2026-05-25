@@ -404,11 +404,23 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .btn-enviar:hover {
   background: #1d4ed8;
+}
+
+.btn-enviar.loading,
+.btn-enviar:disabled {
+  background: #475569;
+  color: #f8fafc;
+  cursor: not-allowed;
+}
+
+.btn-enviar.loading:hover,
+.btn-enviar:disabled:hover {
+  background: #475569;
 }
 
 .btn-borrador {
