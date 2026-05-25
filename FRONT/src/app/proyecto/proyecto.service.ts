@@ -47,6 +47,14 @@ export class ProyectoService {
     );
   }
 
+  generarDocumentoCompleto(idProyecto: number, etapa: string): Observable<any> {
+    return this.http.post<any>(
+      `${API}/revisiones/generar-documento-completo`,
+      { id_proyecto: idProyecto, etapa },
+      { headers: this.headers() }
+    );
+  }
+
   private mapToProyecto(p: any): Proyecto {
     return {
       id: p.id_proyecto || p.id,

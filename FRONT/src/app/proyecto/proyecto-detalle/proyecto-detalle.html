@@ -46,6 +46,9 @@
               @for (sub of etapa.subetapas; track sub.nombre; let j = $index) {
                 <button class="substage-item"
                   [class.active]="selectedEtapa() === i && selectedSubEtapa() === j"
+                  [class.bloqueado]="sub.bloqueado"
+                  [disabled]="sub.bloqueado"
+                  [attr.title]="sub.bloqueado ? 'Se desbloquea cuando todas las demás subetapas hayan sido aceptadas.' : null"
                   (click)="selectSubEtapa(i, j)">
                   <span class="substage-name">{{ sub.nombre }}</span>
                   <span class="substage-dot"
@@ -100,24 +103,38 @@
         <p class="section-desc">Sube o actualiza el documento de {{ sub.nombre | lowercase }} del sistema</p>
 
         @if (!isDocente()) {
-          <div class="upload-zone" (click)="fileInput.click()">
-            <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none" accept=".pdf,.doc,.docx" />
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" x2="12" y1="3" y2="15" />
-            </svg>
-            <p class="upload-text">
-              @if (selectedFile()) {
-                Archivo seleccionado: <strong>{{ selectedFile()!.name }}</strong>
+          @if (sub.esDocumentoCompleto) {
+            <div class="documento-completo-box">
+              @if (sub.bloqueado) {
+                <p class="blocked-text">Documento completo se desbloqueará cuando todas las demás subetapas de esta etapa estén aceptadas.</p>
+                <button class="btn-generate" disabled>Generar documento</button>
               } @else {
-                Arrastra tu archivo aquí o haz clic para seleccionar
+                <p class="section-desc">{{ etapaActual().nombre }} completada, descarga el archivo autogenerado.</p>
+                <button class="btn-generate" [class.loading]="isGenerating()" [disabled]="isGenerating()" (click)="generarDocumentoCompleto()">
+                  @if (isGenerating()) { Generando documento... } @else { Generar documento }
+                </button>
               }
-            </p>
-            <p class="upload-hint">PDF, DOC, DOCX hasta 10MB</p>
-            <button class="btn-seleccionar">Seleccionar Archivo</button>
-          </div>
+            </div>
+          } @else {
+            <div class="upload-zone" (click)="fileInput.click()">
+              <input type="file" #fileInput (change)="onFileSelected($event)" class="input-hidden" accept=".pdf,.doc,.docx" aria-label="Seleccionar archivo" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" x2="12" y1="3" y2="15" />
+              </svg>
+              <p class="upload-text">
+                @if (selectedFile()) {
+                  Archivo seleccionado: <strong>{{ selectedFile()!.name }}</strong>
+                } @else {
+                  Arrastra tu archivo aquí o haz clic para seleccionar
+                }
+              </p>
+              <p class="upload-hint">PDF, DOC, DOCX hasta 10MB</p>
+              <button class="btn-seleccionar">Seleccionar Archivo</button>
+            </div>
+          }
         }
 
         <!-- Current File -->
@@ -135,7 +152,7 @@
               </div>
             </div>
             <div class="file-actions">
-              <a [href]="archivo.url" target="_blank" class="btn-file" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem; color: inherit;">
+              <a [href]="archivo.url" target="_blank" class="btn-file btn-file-link">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
@@ -164,7 +181,7 @@
                 </div>
               </div>
               <div class="file-actions">
-                <a [href]="v.url" target="_blank" class="btn-file" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem; color: inherit;">
+                <a [href]="v.url" target="_blank" class="btn-file btn-file-link">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -187,10 +204,10 @@
           </div>
         } @else {
           <!-- Grading Form -->
-          <div class="grading-section" style="margin-top: 2rem; background-color: #f9fafb; padding: 1.5rem; border-radius: 12px; border: 1px solid #e5e7eb;">
-            <h4 style="margin-bottom: 1.25rem; color: #111827; font-size: 1.1rem;">Evaluación de la Entrega</h4>
+          <div class="grading-section">
+            <h4 class="grading-title">Evaluación de la Entrega</h4>
 
-            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="grading-row">
               <button class="btn-eval btn-aprobar" [class.active]="evaluacionEstado() === 'aceptada'"
                       (click)="evaluacionEstado.set('aceptada')">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" /></svg>
@@ -203,18 +220,18 @@
               </button>
             </div>
 
-            <div style="margin-bottom: 1.5rem;">
-              <label style="display: block; font-size: 0.875rem; color: #374151; margin-bottom: 0.5rem; font-weight: 500;">Observaciones / Comentarios (opcional)</label>
+<div class="grading-field">
+              <label class="grading-label">Observaciones / Comentarios (opcional)</label>
               <textarea
                 [ngModel]="evaluacionComentario()"
                 (ngModelChange)="evaluacionComentario.set($event)"
                 placeholder="Escribe el feedback o correcciones para el alumno aquí..."
                 rows="4"
-                style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #111827; font-family: inherit; resize: vertical; box-sizing: border-box;"
+                class="grading-textarea"
               ></textarea>
             </div>
 
-            <button class="btn-enviar" style="width: 100%" (click)="enviarEvaluacion()">
+            <button class="btn-enviar btn-full-width" (click)="enviarEvaluacion()">
               Guardar Evaluación
             </button>
           </div>
@@ -274,9 +291,9 @@
             </span>
           </div>
           @if (r.comentario) {
-            <p class="revision-comment" style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.5;">{{ r.comentario }}</p>
+            <p class="revision-comment">{{ r.comentario }}</p>
           }
-          <span class="revision-date" style="margin-top: 0.5rem; display: block">{{ r.fecha | date:'short' }}</span>
+          <span class="revision-date">{{ r.fecha | date:'short' }}</span>
         </div>
       }
     </div>

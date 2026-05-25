@@ -9,6 +9,8 @@ import { Proyecto } from '../proyecto.model';
 interface SubEtapa {
   nombre: string;
   estado: 'completado' | 'en-revision' | 'pendiente';
+  bloqueado?: boolean;
+  esDocumentoCompleto?: boolean;
 }
 
 interface Etapa {
@@ -38,6 +40,7 @@ export class ProyectoDetalle implements OnInit {
   // File upload state
   selectedFile = signal<File | null>(null);
   isUploading = signal<boolean>(false);
+  isGenerating = signal<boolean>(false);
 
   // Grading state
   evaluacionEstado = signal<'aceptada' | 'requiere_cambios'>('aceptada');
@@ -47,22 +50,47 @@ export class ProyectoDetalle implements OnInit {
     {
       nombre: 'Etapa 1: Documentación del Prototipo',
       icono: 'doc',
-      subetapas: ['Descripción', 'Diagramas de C.U.', 'Arquitectura', 'Entidad-Relación', 'Interfaces'],
+      subetapas: [
+        { nombre: 'Descripción' },
+        { nombre: 'Diagramas de C.U.' },
+        { nombre: 'Arquitectura' },
+        { nombre: 'Entidad-Relación' },
+        { nombre: 'Interfaces' },
+        { nombre: 'Documento completo', esDocumentoCompleto: true },
+      ],
     },
     {
       nombre: 'Etapa 2: Desarrollo del Prototipo',
       icono: 'code',
-      subetapas: ['Avance 25%', 'Avance 50%', 'Avance 75%', 'Avance 100%'],
+      subetapas: [
+        { nombre: 'Avance 25%' },
+        { nombre: 'Avance 50%' },
+        { nombre: 'Avance 75%' },
+        { nombre: 'Avance 100%' },
+      ],
     },
     {
       nombre: 'Etapa 3: Capítulo 1 Introducción',
       icono: 'book',
-      subetapas: ['Objetivos', 'Antecedentes', 'Planteamiento del problema', 'Preguntas de investigación', 'Justificación', 'Viabilidad', 'Metodología'],
+      subetapas: [
+        { nombre: 'Objetivos' },
+        { nombre: 'Antecedentes' },
+        { nombre: 'Planteamiento del problema' },
+        { nombre: 'Preguntas de investigación' },
+        { nombre: 'Justificación' },
+        { nombre: 'Viabilidad' },
+        { nombre: 'Metodología' },
+        { nombre: 'Documento completo', esDocumentoCompleto: true },
+      ],
     },
     {
       nombre: 'Etapa 4: Capítulo 2 Marco Teórico',
       icono: 'book',
-      subetapas: ['Revisión de literatura', 'Desarrollo de conceptos'],
+      subetapas: [
+        { nombre: 'Revisión de literatura' },
+        { nombre: 'Desarrollo de conceptos' },
+        { nombre: 'Documento completo', esDocumentoCompleto: true },
+      ],
     },
   ];
 
@@ -70,21 +98,36 @@ export class ProyectoDetalle implements OnInit {
     const p = this.proyecto();
     if (!p) return [];
 
-    return this.etapasBase.map(etapa => ({
-      nombre: etapa.nombre,
-      icono: etapa.icono,
-      subetapas: etapa.subetapas.map(nombre => {
-        // Find latest revision for this subetapa
-        const revision = p.revisiones?.find((r: any) => r.tipo === nombre);
+    return this.etapasBase.map((etapa) => {
+      const subetapas = etapa.subetapas.map((sub) => {
+        const revision = p.revisiones?.find((r: any) => r.tipo === sub.nombre);
         let estado: 'completado' | 'en-revision' | 'pendiente' = 'pendiente';
         if (revision) {
           if (revision.estado === 'aceptada') estado = 'completado';
           else if (revision.estado === 'pendiente') estado = 'en-revision';
-          // requiere_cambios = pendiente essentially
         }
-        return { nombre, estado };
-      })
-    }));
+        return {
+          nombre: sub.nombre,
+          estado,
+          esDocumentoCompleto: sub.esDocumentoCompleto,
+          bloqueado: false,
+        } as SubEtapa;
+      });
+
+      const documentoCompleto = subetapas.find((s: SubEtapa) => s.esDocumentoCompleto);
+      if (documentoCompleto) {
+        const bloqueado = subetapas
+          .filter((s) => !s.esDocumentoCompleto)
+          .some((s) => s.estado !== 'completado');
+        documentoCompleto.bloqueado = bloqueado;
+      }
+
+      return {
+        nombre: etapa.nombre,
+        icono: etapa.icono,
+        subetapas,
+      };
+    });
   });
 
   expandedEtapa = signal<number>(0);
@@ -114,7 +157,7 @@ export class ProyectoDetalle implements OnInit {
       fecha: new Date(latest.fecha).toLocaleDateString(),
       url: `http://localhost:3000${latest.documento_path}`,
       estado: latest.estado,
-      tamano: 'Desconocido'
+      tamano: 'Desconocido',
     };
   });
 
@@ -125,7 +168,7 @@ export class ProyectoDetalle implements OnInit {
       nombre: r.documento_path.split('/').pop(),
       fecha: new Date(r.fecha).toLocaleDateString(),
       tamano: 'Desconocido',
-      url: `http://localhost:3000${r.documento_path}`
+      url: `http://localhost:3000${r.documento_path}`,
     }));
   });
 
@@ -133,7 +176,7 @@ export class ProyectoDetalle implements OnInit {
     const user = this.authService.getUser();
     this.isDocente.set(user ? user.rol === 'Docente' : false);
 
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (id) {
         this.loadProyecto(id);
@@ -147,14 +190,16 @@ export class ProyectoDetalle implements OnInit {
       next: (data) => {
         // Sort revisiones by date descending just in case
         if (data.revisiones) {
-          data.revisiones.sort((a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+          data.revisiones.sort(
+            (a: any, b: any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+          );
         }
         this.proyecto.set(data);
         this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
@@ -163,6 +208,10 @@ export class ProyectoDetalle implements OnInit {
   }
 
   selectSubEtapa(etapaIdx: number, subIdx: number) {
+    const etapa = this.etapas()[etapaIdx];
+    const sub = etapa?.subetapas[subIdx];
+    if (sub?.bloqueado) return;
+
     this.selectedEtapa.set(etapaIdx);
     this.selectedSubEtapa.set(subIdx);
     this.expandedEtapa.set(etapaIdx);
@@ -197,7 +246,23 @@ export class ProyectoDetalle implements OnInit {
       error: (err) => {
         console.error('Error subiendo archivo', err);
         this.isUploading.set(false);
-      }
+      },
+    });
+  }
+
+  generarDocumentoCompleto() {
+    const p = this.proyecto();
+    const sub = this.subEtapaActual();
+    const etapa = this.etapaActual();
+    if (!p || !sub || !etapa || !sub.esDocumentoCompleto || sub.bloqueado) return;
+
+    this.isGenerating.set(true);
+    this.proyectoService.generarDocumentoCompleto(p.id, etapa.nombre).subscribe({
+      next: () => {
+        this.loadProyecto(p.id);
+      },
+      error: (err) => console.error('Error generando documento completo', err),
+      complete: () => this.isGenerating.set(false),
     });
   }
 
@@ -209,13 +274,15 @@ export class ProyectoDetalle implements OnInit {
     const latest = revs[0] as any;
 
     // Send evaluation to backend
-    this.proyectoService.evaluarRevision(latest.id_revision, this.evaluacionEstado(), this.evaluacionComentario()).subscribe({
-      next: () => {
-        // Also we would normally send the message via the Mensajes or Notificaciones system
-        // But the backend automatically creates a notification!
-        this.loadProyecto(p.id);
-      },
-      error: (err) => console.error('Error evaluando', err)
-    });
+    this.proyectoService
+      .evaluarRevision(latest.id_revision, this.evaluacionEstado(), this.evaluacionComentario())
+      .subscribe({
+        next: () => {
+          // Also we would normally send the message via the Mensajes or Notificaciones system
+          // But the backend automatically creates a notification!
+          this.loadProyecto(p.id);
+        },
+        error: (err) => console.error('Error evaluando', err),
+      });
   }
 }
