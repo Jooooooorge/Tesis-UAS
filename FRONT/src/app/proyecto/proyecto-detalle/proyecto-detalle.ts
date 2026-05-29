@@ -258,11 +258,19 @@ export class ProyectoDetalle implements OnInit {
 
     this.isGenerating.set(true);
     this.proyectoService.generarDocumentoCompleto(p.id, etapa.nombre).subscribe({
-      next: () => {
-        this.loadProyecto(p.id);
+      next: (pdfBlob: Blob) => {
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `documento-completo-${p.id}-${Date.now()}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+        this.isGenerating.set(false);
       },
-      error: (err) => console.error('Error generando documento completo', err),
-      complete: () => this.isGenerating.set(false),
+      error: (err) => {
+        console.error('Error generando documento completo', err);
+        this.isGenerating.set(false);
+      },
     });
   }
 

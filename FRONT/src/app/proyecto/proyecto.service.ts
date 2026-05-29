@@ -47,11 +47,14 @@ export class ProyectoService {
     );
   }
 
-  generarDocumentoCompleto(idProyecto: number, etapa: string): Observable<any> {
-    return this.http.post<any>(
+  generarDocumentoCompleto(idProyecto: number, etapa: string): Observable<Blob> {
+    return this.http.post<Blob>(
       `${API}/revisiones/generar-documento-completo`,
       { id_proyecto: idProyecto, etapa },
-      { headers: this.headers() }
+      {
+        headers: this.headers(),
+        responseType: 'blob' as 'json'
+      }
     );
   }
 
