@@ -144,6 +144,16 @@
   border-left-color: #2563eb;
 }
 
+.substage-item.bloqueado {
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.substage-item.bloqueado:hover {
+  background: none;
+}
+
 .substage-dot {
   width: 8px;
   height: 8px;
@@ -302,6 +312,41 @@
   background: #f3f4f6;
 }
 
+.documento-completo-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.blocked-text {
+  color: #6b7280;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.btn-generate {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 9999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-generate:disabled {
+  background: #475569;
+  cursor: not-allowed;
+}
+
 /* File Card */
 .file-card {
   display: flex;
@@ -380,6 +425,75 @@
   height: 14px;
 }
 
+.btn-file-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.input-hidden {
+  display: none;
+}
+
+.grading-section {
+  margin-top: 2rem;
+  background-color: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.grading-title {
+  margin-bottom: 1.25rem;
+  color: #111827;
+  font-size: 1.1rem;
+}
+
+.grading-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grading-field {
+  margin-bottom: 1.5rem;
+}
+
+.grading-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.grading-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.btn-full-width {
+  width: 100%;
+}
+
+.revision-comment {
+  margin-top: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.revision-date {
+  margin-top: 0.5rem;
+  display: block;
+}
+
 .versions-title {
   font-size: 0.9rem;
   font-weight: 600;
@@ -404,11 +518,23 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .btn-enviar:hover {
   background: #1d4ed8;
+}
+
+.btn-enviar.loading,
+.btn-enviar:disabled {
+  background: #475569;
+  color: #f8fafc;
+  cursor: not-allowed;
+}
+
+.btn-enviar.loading:hover,
+.btn-enviar:disabled:hover {
+  background: #475569;
 }
 
 .btn-borrador {
