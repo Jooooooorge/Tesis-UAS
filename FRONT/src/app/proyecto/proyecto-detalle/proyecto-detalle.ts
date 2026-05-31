@@ -259,19 +259,71 @@ export class ProyectoDetalle implements OnInit {
     this.isGenerating.set(true);
     this.proyectoService.generarDocumentoCompleto(p.id, etapa.nombre).subscribe({
       next: (pdfBlob: Blob) => {
-        const url = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `documento-completo-${p.id}-${Date.now()}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
-        this.isGenerating.set(false);
+        // Detectar si el servidor devolvió JSON en lugar de PDF
+        if (pdfBlob.type === 'application/json') {
+          pdfBlob.text().then((text) => {
+            try {
+              const errorData = JSON.parse(text);
+              console.error('Error del servidor:', errorData);
+              alert(
+                `Error al generar documento: ${errorData.error || errorData.message || 'Error desconocido del servidor'}`
+              );
+            } catch {
+              console.error('Respuesta inválida:', text);
+              alert('El servidor devolvió una respuesta inválida (JSON en lugar de PDF)');
+            }
+            this.isGenerating.set(false);
+          });
+          return;
+        }
+
+        // Validar que sea un PDF válido
+        if (!pdfBlob || pdfBlob.size === 0) {
+          console.error('El PDF generado está vacío o es inválido');
+          alert('El PDF generado está vacío');
+          this.isGenerating.set(false);
+          return;
+        }
+
+        // Verificar el magic number del PDF
+        const reader = new FileReader();
+        reader.onload = () => {
+          const array = new Uint8Array(reader.result as ArrayBuffer);
+          const header = String.fromCharCode(array[0], array[1], array[2], array[3]);
+
+          if (header !== '%PDF') {
+            console.error('No es un PDF válido. Header:', header);
+            alert('El archivo generado no es un PDF válido');
+            this.isGenerating.set(false);
+            return;
+          }
+
+          this.descargarPDF(pdfBlob, p.id);
+        };
+        reader.readAsArrayBuffer(pdfBlob);
       },
       error: (err) => {
         console.error('Error generando documento completo', err);
+        alert(`Error en la solicitud: ${err.message || err.statusText}`);
         this.isGenerating.set(false);
       },
     });
+  }
+
+  private descargarPDF(pdfBlob: Blob, proyectoId: number) {
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `documento-completo-${proyectoId}-${Date.now()}.pdf`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      this.isGenerating.set(false);
+    }, 100);
   }
 
   enviarEvaluacion() {

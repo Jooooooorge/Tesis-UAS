@@ -69,7 +69,7 @@ export class ProyectoService {
       { id_proyecto: idProyecto, etapa },
       {
         headers: this.headers(),
-        responseType: 'blob' as 'json'
+        responseType: 'blob' as any
       }
     );
   }
